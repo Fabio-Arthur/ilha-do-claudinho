@@ -46,6 +46,7 @@ Para fechar: botão direito na ilha → **Fechar a ilha**.
 | `ajudantes/musica.py` | Lê e controla a música pelo Windows |
 | `ajudantes/jogos.py` | Descobre se tem jogo aberto |
 | `ajudantes/radios.py` | Liga/desliga Wi-Fi e Bluetooth |
+| `ajudantes/janela.py` | Vê se o programa em uso cobre o topo (aí a ilha vira um relevinho) |
 | `espaco-reservado.js` | Reserva uma faixa no topo da tela (desligado por padrão) |
 | `ferramentas/montar-icones.js` | Junta os ícones usados num arquivo só (`npm run icones`) |
 

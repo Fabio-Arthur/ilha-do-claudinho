@@ -21,8 +21,8 @@ app.commandLine.appendSwitch('js-flags', '--lite-mode');
 app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,HardwareMediaKeyHandling');
 
 // A janela é maior que a ilha: a sobra é transparente e deixa espaço pra ilha crescer
-const LARGURA_JANELA = 480;
-const ALTURA_JANELA = 220;
+const LARGURA_JANELA = 450;
+const ALTURA_JANELA = 200;
 
 // Faixa do topo que a ilha "pega pra ela" (mesma altura da ilha fechada, no ilha.css).
 // As janelas maximizadas começam embaixo dela. Coloque 0 pra desligar.
@@ -107,6 +107,9 @@ const AO_RECEBER = {
     janela.webContents.send('radios-mudaram', estado);
     lerWifi(); // ligou/desligou o Wi-Fi: atualiza o nome da rede na hora
   },
+
+  // O programa que você está usando chega no topo da tela? (a ilha vira relevinho)
+  janela: ({ coberta }) => janela.webContents.send('janela-mudou', coberta),
 };
 
 // Liga o ajudante. Se ele cair, liga de novo sozinho depois de 3 segundos.

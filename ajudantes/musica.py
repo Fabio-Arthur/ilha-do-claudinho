@@ -9,6 +9,7 @@
 
 import asyncio
 import base64
+import time
 
 from winrt.windows.media.control import (
     GlobalSystemMediaTransportControlsSessionManager as GerenciadorDeMidia,
@@ -78,7 +79,8 @@ async def rodar(enviar, comandos_pendentes):
     gerenciador = await GerenciadorDeMidia.request_async()
 
     ultimo_estado = None
-    capa_guardada = {"musica": None, "imagem": None}
+    # A capa guardada: de qual música é, a imagem, quando a música trocou e quando lemos a capa
+    capa_guardada = {"musica": None, "imagem": None, "trocou_em": 0, "lida_em": 0}
 
     while True:
         sessao = escolher_sessao(gerenciador)
@@ -95,9 +97,25 @@ async def rodar(enviar, comandos_pendentes):
                 tocando = sessao.get_playback_info().playback_status == StatusDoPlayer.PLAYING
                 musica = (propriedades.title, propriedades.artist)
 
-                # A capa só é lida de novo quando a música troca (ler toda hora pesa)
-                if capa_guardada["musica"] != musica or capa_guardada["imagem"] is None:
-                    capa_guardada = {"musica": musica, "imagem": await ler_capa(propriedades)}
+                # Quando a música troca, o player avisa PRIMEIRO o nome e só um
+                # pouquinho DEPOIS a capa nova. Se a gente lesse a capa uma vez só,
+                # pegaria a da música anterior. Então:
+                #   - nos 8 s depois da troca: relê a capa a cada 1 s (até a nova chegar)
+                #   - depois disso: relê a cada 10 s, só por garantia
+                agora = time.monotonic()
+                if capa_guardada["musica"] != musica:
+                    capa_guardada = {"musica": musica, "imagem": None, "trocou_em": agora, "lida_em": 0}
+
+                acabou_de_trocar = agora - capa_guardada["trocou_em"] < 8
+                tempo_desde_leitura = agora - capa_guardada["lida_em"]
+                if (
+                    capa_guardada["imagem"] is None
+                    or (acabou_de_trocar and tempo_desde_leitura >= 1)
+                    or tempo_desde_leitura >= 10
+                ):
+                    capa_nova = await ler_capa(propriedades)
+                    capa_guardada["imagem"] = capa_nova or capa_guardada["imagem"]
+                    capa_guardada["lida_em"] = agora
 
                 estado = {
                     "tem_musica": bool(propriedades.title),

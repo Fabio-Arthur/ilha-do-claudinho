@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('ilha', {
   comandoRadio: (comando) => ipcRenderer.send('comando-radio', comando),
   abrirTela: (nome) => ipcRenderer.send('abrir-tela', nome),
   quandoRadiosMudarem: (funcao) => ipcRenderer.on('radios-mudaram', (_evento, estado) => funcao(estado)),
-  quandoWifiMudar:(funcao) => ipcRenderer.on('wifi-mudou', (_evento, wifi) => funcao(wifi)),
-  quandoJogoMudar:(funcao) => ipcRenderer.on('jogo-mudou', (_evento, jogo) => funcao(jogo)),
+  quandoWifiMudar: (funcao) => ipcRenderer.on('wifi-mudou', (_evento, wifi) => funcao(wifi)),
+  quandoJogoMudar: (funcao) => ipcRenderer.on('jogo-mudou', (_evento, jogo) => funcao(jogo)),
+  quandoJanelaMudar: (funcao) => ipcRenderer.on('janela-mudou', (_evento, coberta) => funcao(coberta)),
 });

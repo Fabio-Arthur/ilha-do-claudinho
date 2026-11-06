@@ -67,7 +67,9 @@ for (const botao of document.querySelectorAll('[data-comando]')) {
 trilho.addEventListener('click', (evento) => {
   const tempo = musicaAtual.tempo;
   if (!tempo) return;
-  const fracao = evento.offsetX / trilho.clientWidth; // 0 = começo, 1 = fim
+  // Onde o mouse clicou, medido a partir da borda esquerda da barrinha
+  const caixa = trilho.getBoundingClientRect();
+  const fracao = Math.min(Math.max((evento.clientX - caixa.left) / caixa.width, 0), 1); // 0 = começo, 1 = fim
   const segundos = fracao * tempo.duracao;
   window.ilha.comandoMusica('ir_para:' + segundos.toFixed(1));
   // Já mexe a barrinha na hora, sem esperar o player responder
@@ -95,17 +97,20 @@ window.ilha.quandoMusicaMudar((estado) => {
   atualizarProgresso();
 });
 
-// A mesma capa aparece em 3 lugares: grande, mini (ilha fechada) e borrada de fundo
+// A mesma capa aparece em 4 lugares: grande, mini (ilha fechada), borrada de
+// fundo e borrada dentro das orelhinhas
 const capaMini = document.getElementById('capa-mini');
 const capaFundo = document.getElementById('capa-fundo');
+const capaOrelhas = document.getElementById('capa-orelhas');
+const lugaresDaCapa = [capa, capaMini, capaFundo, capaOrelhas];
 
 function trocarCapa(imagem) {
   if (!imagem) {
-    for (const lugar of [capa, capaMini, capaFundo]) lugar.removeAttribute('src');
+    for (const lugar of lugaresDaCapa) lugar.removeAttribute('src');
     ilhaElemento.style.removeProperty('--cor-capa'); // volta pra lavanda
     return;
   }
-  for (const lugar of [capa, capaMini, capaFundo]) lugar.src = imagem;
+  for (const lugar of lugaresDaCapa) lugar.src = imagem;
   capa.onload = () => ilhaElemento.style.setProperty('--cor-capa', corDaCapa(capa));
 }
 
@@ -254,6 +259,7 @@ window.ilha.quandoJogoMudar((jogo) => {
 
   jogoAtual = jogo;
   ilhaElemento.classList.toggle('jogando', Boolean(jogo));
+  atualizarRelevinho(); // começou/parou de jogar: decide de novo se encolhe
   // A aba mostra o controle + nome do jogo, e volta pro chip + "PC" depois
   iconeAbaPc.setAttribute('href', jogo ? '#i-gamepad-2' : '#i-cpu');
   textoAbaPc.textContent = jogo || 'PC';
@@ -403,6 +409,22 @@ async function ligarBateria() {
 }
 
 ligarBateria();
+
+// ---------- Modo relevinho ----------
+// Se o programa que você está usando chega no topo da tela, a ilha encolhe e
+// vira só um relevinho preto. Passou o mouse nele, ela abre normal.
+// Exceção: no modo jogo ela não encolhe (lá a gente QUER ver GPU e temperatura).
+
+let ilhaCoberta = false;
+
+function atualizarRelevinho() {
+  ilhaElemento.classList.toggle('mini', ilhaCoberta && !jogoAtual);
+}
+
+window.ilha.quandoJanelaMudar((coberta) => {
+  ilhaCoberta = coberta;
+  atualizarRelevinho();
+});
 
 // ---------- Texto da barra fechada ----------
 // Jogando: GPU e temperatura. Com música: o nome da música. Sem nada: a data.

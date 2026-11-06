@@ -1,4 +1,5 @@
 /* ===== Cores (tema Espaço Noturno) ===== */
+
 :root {
   --fundo-ilha: #05060d;
   --lavanda: #a68cff;
@@ -11,10 +12,10 @@
   --verde: #7ee0a1;
 
   /* Tamanhos da ilha fechada e aberta */
-  --largura-fechada: 340px;
-  --altura-fechada: 36px;
-  --largura-aberta: 440px;
-  --altura-aberta: 184px;
+  --largura-fechada: 310px;
+  --altura-fechada: 32px;
+  --largura-aberta: 400px;
+  --altura-aberta: 160px;
 
   /* A "molinha" da animação: passa um pouquinho do ponto e volta */
   --molinha: cubic-bezier(0.34, 1.4, 0.64, 1);
@@ -22,7 +23,7 @@
   --suave: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Tamanho das orelhinhas curvas que ligam a ilha à borda da tela */
-  --orelha: 12px;
+  --orelha: 10px;
 }
 
 * {
@@ -87,13 +88,12 @@ button {
   height: var(--altura-fechada);
   background: var(--fundo-ilha);
   /* Cantos de cima retos (colados na borda da tela), de baixo redondos: cara de "notch" */
-  border-radius: 0 0 18px 18px;
+  border-radius: 0 0 16px 16px;
   /* FECHANDO: rápido e suave. (A transição que vale é a do estado de DESTINO.) */
   transition:
     width 0.3s var(--suave),
     height 0.3s var(--suave),
-    border-radius 0.3s var(--suave),
-    box-shadow 0.6s;
+    border-radius 0.3s var(--suave);
 }
 
 /* ABRINDO: mais devagar e com molinha */
@@ -101,8 +101,7 @@ button {
   transition:
     width 0.5s var(--molinha),
     height 0.5s var(--molinha),
-    border-radius 0.5s var(--molinha),
-    box-shadow 0.6s;
+    border-radius 0.5s var(--molinha);
 }
 
 /* ===== Orelhinhas =====
@@ -167,16 +166,70 @@ button {
 }
 
 /* Só aparece com a ilha aberta, na aba Música, com música e com capa */
-#ilha.aberta[data-aba='musica']:not(.sem-som) .capa-fundo[src] {
+#ilha.aberta[data-aba='musica']:not(.sem-som) .capa-fundo[src],
+#ilha.aberta[data-aba='musica']:not(.sem-som) .capa-orelhas[src] {
   opacity: 0.35;
 }
 
+/* ===== Capa borrada nas orelhinhas =====
+   Uma cópia EXATA da capa borrada de dentro (mesmo tamanho e posição,
+   então as cores casam), recortada por uma máscara no formato das orelhinhas.
+   A máscara é o mesmo desenho das orelhinhas (::before/::after), só que
+   em vez de pintar preto, ela decide ONDE a imagem aparece. */
+.capa-orelhas {
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(36px) saturate(1.6); /* o borrão vem ANTES do recorte */
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+  z-index: 1; /* por cima do preto das orelhinhas */
+  mask-image:
+    radial-gradient(circle at 0 100%, transparent calc(var(--orelha) - 0.5px), #000 var(--orelha)),
+    radial-gradient(circle at 100% 100%, transparent calc(var(--orelha) - 0.5px), #000 var(--orelha));
+  mask-size: var(--orelha) var(--orelha);
+  mask-repeat: no-repeat;
+  /* +40px porque a imagem começa 40px antes da ilha (pra o borrão não ter borda) */
+  mask-position:
+    calc(40px - var(--orelha)) 40px,
+    calc(100% - 40px + var(--orelha)) 40px;
+}
+
 /* Jogando: a ilha fechada estica um pouco pra caber "GPU 72% · 68° · CPU 30%" */
+/* ===== Modo relevinho =====
+   O programa que você está usando chega no topo da tela: a ilha fechada vira só
+   um relevinho preto. Passou o mouse, ela abre (a classe "aberta" ganha de "mini"). */
+#ilha.mini:not(.aberta) {
+  --largura-fechada: 130px;
+  --altura-fechada: 8px;
+  --orelha: 6px;
+  border-radius: 0 0 8px 8px;
+}
+
+/* O conteúdo some rapidinho pra não aparecer espremido */
+.barra {
+  transition: opacity 0.2s;
+}
+
+#ilha.mini:not(.aberta) .barra {
+  opacity: 0;
+}
+
+
+/* Com música, a ilha fechada estica pra caber o nome da música */
+#ilha:not(.sem-som) {
+  --largura-fechada: 370px;
+}
+
 /* ===== Modo foco gamer =====
    Jogando: a ilha fechada estica e vira um painel de desempenho.
    Bluetooth/Wi-Fi/bateria e a data somem pra dar espaço. */
 #ilha.jogando {
-  --largura-fechada: 400px;
+  --largura-fechada: 360px;
 }
 
 #ilha.jogando .status { display: none; }
@@ -186,7 +239,7 @@ button {
   display: none;
   flex: 1;
   justify-content: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 #ilha.jogando:not(.aberta) .gamer { display: flex; }
@@ -222,19 +275,13 @@ button {
   text-overflow: ellipsis;
 }
 
-/* Tocando música: a ilha brilha com a cor da capa */
-#ilha.tocando {
-  box-shadow: 0 0 16px -2px color-mix(in srgb, var(--cor-capa) 60%, transparent);
-}
 
 #ilha.aberta {
-  --orelha: 16px;
+  --orelha: 14px;
   width: var(--largura-aberta);
   height: var(--altura-aberta);
-  border-radius: 0 0 32px 32px;
-  box-shadow:
-    0 0 22px -4px color-mix(in srgb, var(--cor-capa) 55%, transparent),
-    0 8px 24px rgb(0 0 0 / 0.45);
+  border-radius: 0 0 28px 28px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
 }
 
 /* ===== Barra de cima ===== */
@@ -243,13 +290,13 @@ button {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 16px;
+  gap: 8px;
+  padding: 0 14px;
 }
 
 .claudinho {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 
@@ -348,7 +395,7 @@ button {
 
 /* ===== Relógio ===== */
 .relogio {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums; /* os segundos mudam sem o texto "pular" */
   flex-shrink: 0;
@@ -498,7 +545,7 @@ button {
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 999px;
   color: var(--texto-fraco);
   transition: background 0.2s, color 0.2s;
@@ -552,7 +599,7 @@ button {
 .painel {
   flex: 1;
   min-height: 0;
-  padding: 6px 22px 20px;
+  padding: 4px 18px 16px;
   opacity: 0;
   /* Fechada: o conteúdo fica um pouquinho pra cima e menor, "guardado" */
   transform: translateY(-10px) scale(0.96);
@@ -584,15 +631,15 @@ button {
 /* ===== Aba Música ===== */
 .musica {
   display: flex;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
   height: 100%;
 }
 
 .capa {
-  width: 108px;
-  height: 108px;
-  border-radius: 16px;
+  width: 84px;
+  height: 84px;
+  border-radius: 14px;
   object-fit: cover;
   background: #1a1c2e;
   flex-shrink: 0;
@@ -619,12 +666,12 @@ button {
 }
 
 .titulo {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .artista {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--texto-fraco);
   margin-top: 2px;
 }
@@ -634,7 +681,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 14px; /* espaço pro Claudinho correr em cima da barrinha */
   font-size: 11px;
   color: var(--texto-fraco);
   font-variant-numeric: tabular-nums; /* números com a mesma largura: não fica "tremendo" */
@@ -644,17 +691,17 @@ button {
 #ilha.sem-tempo .progresso { visibility: hidden; }
 
 .trilho {
+  position: relative; /* o corredor se posiciona em relação a ela */
   flex: 1;
   height: 8px;
   cursor: pointer;
 }
 
-/* ===== Estilo cartoon (vale pras duas linhas do tempo) =====
-   --progresso (0% a 100%) é o JS que coloca na #ilha; as duas linhas leem dele. */
+/* ===== Linha do tempo estilo cartoon =====
+   --progresso (0% a 100%) é o JS que coloca na #ilha. */
 
 /* O "chão" da linha: escurinho e afundado (a sombra de dentro fica em cima) */
-.trilho,
-.estrada {
+.trilho {
   border-radius: 999px;
   background: rgb(255 255 255 / 0.1);
   box-shadow: inset 0 2px 0 rgb(0 0 0 / 0.35);
@@ -662,9 +709,7 @@ button {
 
 /* A parte já tocada: tipo "gel" de desenho animado, em 3 camadas de fundo:
    1) faixa de brilho branco em cima  2) listrinhas de bala  3) a cor da capa */
-.trilho i,
-.percorrido {
-  position: relative;
+.trilho i {
   display: block;
   height: 100%;
   width: var(--progresso, 0%);
@@ -681,8 +726,7 @@ button {
   animation-play-state: paused; /* listras paradas até a música tocar */
 }
 
-#ilha.tocando .trilho i,
-#ilha.tocando .percorrido {
+#ilha.tocando .trilho i {
   animation-play-state: running;
 }
 
@@ -692,59 +736,22 @@ button {
   to { background-position: 0 0, 11.31px 0, 0 0; }
 }
 
-/* Bolinha na ponta da barra da ilha aberta (o "pino" que você arrasta com o olho) */
-.trilho i::after {
-  content: '';
-  position: absolute;
-  right: -7px;
-  top: 50%;
-  translate: 0 -50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--cor-capa);
-  box-shadow: 0 2px 0 rgb(0 0 0 / 0.4);
-  transition: scale 0.15s var(--molinha);
-}
-
-.trilho:hover i::after {
-  scale: 1.2;
-}
-
-/* ===== Linha do tempo da ilha FECHADA ===== */
-.linha-do-tempo {
-  display: none;
-  flex-shrink: 0;
-  height: 12px;
-  padding: 2px 24px 0; /* longe das bordas redondas da ilha */
-}
-
-/* Com música (e com tempo), fora do modo jogo e com a ilha fechada:
-   a ilha cresce um pouquinho pra caber a linha */
-#ilha:not(.sem-som):not(.sem-tempo):not(.jogando):not(.aberta) {
-  height: calc(var(--altura-fechada) + 12px);
-}
-
-#ilha:not(.sem-som):not(.sem-tempo):not(.jogando):not(.aberta) .linha-do-tempo {
-  display: block;
-}
-
-.estrada {
-  position: relative;
-  height: 6px;
-}
-
-/* --- O mini Claudinho corredor --- */
+/* --- O mini Claudinho corredor, em pé em cima da barrinha --- */
 .corredor {
   position: absolute;
   bottom: calc(100% - 1px); /* em pé em cima da linha */
   left: var(--progresso, 0%);
-  width: 13px;
-  height: 11px;
+  width: 16px;
+  height: 13px;
   translate: -50% 0; /* o meio dele fica na posição da música */
   filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.7)); /* contorninho de desenho animado */
+  pointer-events: none; /* o clique "atravessa" ele e chega na barrinha */
   transition: left 0.5s linear;
+}
+
+/* Passou o mouse na barrinha: ele cresce um pouquinho, tipo "me arrasta!" */
+.trilho:hover .corredor {
+  scale: 1.2;
 }
 
 /* Parado: só o primeiro par de perninhas aparece */
@@ -778,22 +785,22 @@ button {
 .botoes {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .botoes button {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   transition: transform 0.15s, background 0.15s;
 }
 
 .botoes button svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: currentColor;
 }
 
@@ -806,8 +813,8 @@ button {
 }
 
 .botoes .botao-principal {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   background: var(--cor-capa);
   color: var(--fundo-ilha);
   transition: transform 0.15s, background 0.6s, filter 0.15s;
@@ -859,15 +866,15 @@ button {
      Mais claro em cima, mais escuro embaixo: parece que a luz vem de cima. */
   background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
   border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 18px;
-  padding: 12px 0;
+  border-radius: 16px;
+  padding: 10px 0;
 }
 
 .cartao {
   /* --nivel (0% a 100%) é o JS que coloca: enche a barrinha */
   --cor-nivel: var(--lavanda);
 
-  padding: 0 12px;
+  padding: 0 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -892,7 +899,7 @@ button {
 }
 
 .cartao .valor {
-  font-size: 20px;
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -946,7 +953,7 @@ button {
   background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
   border: 1px solid rgb(255 255 255 / 0.06);
   border-radius: 16px;
-  padding: 10px 10px 10px 12px;
+  padding: 8px 10px 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -968,7 +975,7 @@ button {
 
 
 .conexao-valor {
-  font-size: 15px;
+  font-size: 14px;
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;

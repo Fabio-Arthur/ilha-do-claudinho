@@ -14,6 +14,10 @@
     <div id="ilha" class="fechada sem-som" data-aba="musica">
       <!-- O "miolo" corta o que passa da borda. A #ilha em si fica livre pra
            desenhar as orelhinhas curvas pra fora (igual o notch do MacBook). -->
+      <!-- A mesma capa borrada, mas recortada no formato das orelhinhas:
+           assim o borrão colorido continua até a curvinha da borda da tela -->
+      <img id="capa-orelhas" class="capa-orelhas" alt="" />
+
       <div class="miolo">
       <!-- Capa da música bem borrada, de fundo (só na aba Música aberta) -->
       <img id="capa-fundo" class="capa-fundo" alt="" />
@@ -94,31 +98,6 @@
         </button>
       </div>
 
-      <!-- ===== Linha do tempo cartoon: só com música e a ilha FECHADA ===== -->
-      <div class="linha-do-tempo" aria-hidden="true">
-        <div class="estrada">
-          <i class="percorrido"></i>
-          <!-- Mini Claudinho correndo na posição da música.
-               Tem dois pares de perninhas: o CSS alterna entre eles = passinhos. -->
-          <svg class="corredor" viewBox="0 0 16 13" shape-rendering="crispEdges">
-            <rect x="3" y="4" width="10" height="6" fill="#d97757" />
-            <rect x="1" y="6" width="2" height="2" fill="#d97757" />
-            <rect x="13" y="6" width="2" height="2" fill="#d97757" />
-            <rect x="3" y="9" width="10" height="1" fill="#b85c3e" />
-            <rect x="5" y="5" width="1" height="2" fill="#1e1f29" />
-            <rect x="10" y="5" width="1" height="2" fill="#1e1f29" />
-            <g class="pernas-a">
-              <rect x="4" y="10" width="1" height="3" fill="#d97757" />
-              <rect x="9" y="10" width="1" height="3" fill="#d97757" />
-            </g>
-            <g class="pernas-b">
-              <rect x="6" y="10" width="1" height="3" fill="#d97757" />
-              <rect x="11" y="10" width="1" height="3" fill="#d97757" />
-            </g>
-          </svg>
-        </div>
-      </div>
-
       <!-- ===== Parte de baixo: só aparece quando a ilha abre ===== -->
       <div class="painel">
         <!-- --- Aba Música --- -->
@@ -133,6 +112,24 @@
                 <span id="tempo-atual">0:00</span>
                 <div id="trilho" class="trilho" title="Clique pra pular pra essa parte">
                   <i id="preenchido"></i>
+                  <!-- Mini Claudinho correndo na posição da música.
+                       Tem dois pares de perninhas: o CSS alterna entre eles = passinhos. -->
+                  <svg class="corredor" viewBox="0 0 16 13" shape-rendering="crispEdges" aria-hidden="true">
+                    <rect x="3" y="4" width="10" height="6" fill="#d97757" />
+                    <rect x="1" y="6" width="2" height="2" fill="#d97757" />
+                    <rect x="13" y="6" width="2" height="2" fill="#d97757" />
+                    <rect x="3" y="9" width="10" height="1" fill="#b85c3e" />
+                    <rect x="5" y="5" width="1" height="2" fill="#1e1f29" />
+                    <rect x="10" y="5" width="1" height="2" fill="#1e1f29" />
+                    <g class="pernas-a">
+                      <rect x="4" y="10" width="1" height="3" fill="#d97757" />
+                      <rect x="9" y="10" width="1" height="3" fill="#d97757" />
+                    </g>
+                    <g class="pernas-b">
+                      <rect x="6" y="10" width="1" height="3" fill="#d97757" />
+                      <rect x="11" y="10" width="1" height="3" fill="#d97757" />
+                    </g>
+                  </svg>
                 </div>
                 <span id="tempo-total">0:00</span>
               </div>
