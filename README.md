@@ -6,13 +6,17 @@ com o Claudinho (um bonequinho em pixel art) morando nela.
 ## O que ela faz
 
 - **Barra fechada:** relógio com segundos, data, Bluetooth, Wi-Fi e bateria.
-  Com música tocando, mostra a capinha e o nome da música.
+  Com música tocando, mostra a capinha, o nome da música e uma linha do tempo
+  estilo desenho animado, com um mini Claudinho correndo em cima.
 - **Música:** capa, barra de progresso clicável e botões ⏮ ⏯ ⏭ para qualquer
   player que aparece no controle de mídia do Windows (YouTube Music, Spotify...).
   A ilha brilha com a cor da capa e o Claudinho dança.
 - **PC:** uso de CPU, RAM, GPU e temperatura da placa de vídeo (NVIDIA).
-- **Modo jogo:** abriu um jogo da Steam, Riot, Epic, Xbox, GOG ou EA, a ilha
-  muda sozinha para a aba PC e mostra GPU/temperatura mesmo fechada.
+- **Modo foco gamer:** abriu um jogo da Steam, Riot, Epic, Xbox, GOG ou EA, a
+  ilha esconde Wi-Fi/bateria e, mesmo fechada, mostra GPU, temperatura, CPU e
+  RAM (amarelo/vermelho quando esquenta).
+- **Abre junto com o Windows:** liga/desliga no botão direito da ilha, ou
+  `npm run iniciar-com-windows`.
 - **Conexões:** liga/desliga Wi-Fi e Bluetooth e atalhos para as telas do Windows.
 
 ## Como rodar
@@ -38,6 +42,7 @@ Para fechar: botão direito na ilha → **Fechar a ilha**.
 | `main.js` | Bastidor do Electron: a janela transparente no topo e os recados |
 | `preload.js` | Ponte entre a página e o bastidor |
 | `ilha/` | O visual: HTML, CSS e JS da ilha |
+| `ajudantes/ajudante.py` | Um Python só que roda as 3 partes abaixo juntas (economiza RAM) |
 | `ajudantes/musica.py` | Lê e controla a música pelo Windows |
 | `ajudantes/jogos.py` | Descobre se tem jogo aberto |
 | `ajudantes/radios.py` | Liga/desliga Wi-Fi e Bluetooth |

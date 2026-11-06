@@ -1,11 +1,24 @@
-// Processo principal do Electron: cria a janela da ilha e liga ela ao ajudante da música.
+// Processo principal do Electron: cria a janela da ilha e liga ela ao ajudante em Python.
 // (A parte visual fica em ilha/. Aqui é o "bastidor".)
 
 const { app, BrowserWindow, ipcMain, Menu, screen, shell } = require('electron');
 const { spawn, execFile } = require('child_process');
 const os = require('os');
 const path = require('path');
-const { reservarEspaco, liberarEspaco } = require('./espaco-reservado');
+
+// ---------- Economia de memória ----------
+// O Electron é um "Chrome inteiro" por baixo. Aqui desligamos peças que a ilha não usa.
+// (Tem que ser ANTES do app ficar pronto.)
+
+// "lite-mode": o JavaScript roda sem o otimizador pesado. O nosso JS é pequeno
+// e quase não faz conta, então não faz diferença na velocidade, só na RAM.
+app.commandLine.appendSwitch('js-flags', '--lite-mode');
+
+// SpareRendererForSitePerProcess: o Chrome deixa um processo "reserva" pronto
+//   pra abrir abas mais rápido. A ilha nunca abre outra aba.
+// HardwareMediaKeyHandling: o Chrome escuta as teclas de mídia (play/pause do
+//   teclado). Quem toca música é o YouTube Music, não a ilha.
+app.commandLine.appendSwitch('disable-features', 'SpareRendererForSitePerProcess,HardwareMediaKeyHandling');
 
 // A janela é maior que a ilha: a sobra é transparente e deixa espaço pra ilha crescer
 const LARGURA_JANELA = 480;
@@ -15,10 +28,12 @@ const ALTURA_JANELA = 220;
 // As janelas maximizadas começam embaixo dela. Coloque 0 pra desligar.
 const ALTURA_RESERVADA = 0;
 
+// O koffi (que reserva a faixa) pesa um pouquinho: só carrega se for usar
+const { reservarEspaco, liberarEspaco } =
+  ALTURA_RESERVADA > 0 ? require('./espaco-reservado') : { reservarEspaco() {}, liberarEspaco() {} };
+
 let janela = null;
-let ajudanteMusica = null;
-let ajudanteJogos = null;
-let ajudanteRadios = null;
+let ajudante = null; // o programa Python que cuida de música, jogos e rádios
 let medidorPc = null; // o "relógio" que mede o PC enquanto a ilha está aberta
 
 function criarJanela() {
@@ -38,6 +53,7 @@ function criarJanela() {
     alwaysOnTop: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
+      spellcheck: false, // corretor ortográfico: a ilha não tem onde digitar
     },
   });
 
@@ -70,14 +86,33 @@ function criarJanela() {
   screen.on('display-metrics-changed', voltarProTopo); // mudou resolução/zoom: confere de novo
 }
 
-// ---------- Ajudantes em Python ----------
+// ---------- Ajudante em Python ----------
+// UM programa Python só (ajudantes/ajudante.py) cuida de música, jogos e rádios.
+// Cada recado dele vem carimbado: {"tipo": "musica", "dados": {...}}
 
-// Liga um ajudante (arquivo .py da pasta ajudantes/) e chama "aoReceber" a cada
-// linha de JSON que ele mandar. Devolve o processo, pra gente poder escrever nele.
-// Se ele cair, liga de novo sozinho depois de 3 segundos.
-function ligarAjudante(arquivo, aoReceber, aoReligar) {
+let ilhaAberta = false;
+let jogoAberto = null; // nome do jogo, ou null
+
+// O que fazer com o recado de cada tipo
+const AO_RECEBER = {
+  musica: (estado) => janela.webContents.send('musica-mudou', estado),
+
+  jogos: ({ jogo }) => {
+    jogoAberto = jogo;
+    janela.webContents.send('jogo-mudou', jogo);
+    atualizarMedidor(); // jogando: mede o PC mesmo com a ilha fechada
+  },
+
+  radios: (estado) => {
+    janela.webContents.send('radios-mudaram', estado);
+    lerWifi(); // ligou/desligou o Wi-Fi: atualiza o nome da rede na hora
+  },
+};
+
+// Liga o ajudante. Se ele cair, liga de novo sozinho depois de 3 segundos.
+function ligarAjudante() {
   const python = path.join(__dirname, 'ajudantes', '.venv', 'Scripts', 'python.exe');
-  const ajudante = spawn(python, ['-u', path.join(__dirname, 'ajudantes', arquivo)], {
+  ajudante = spawn(python, ['-u', path.join(__dirname, 'ajudantes', 'ajudante.py')], {
     windowsHide: true,
   });
 
@@ -89,37 +124,23 @@ function ligarAjudante(arquivo, aoReceber, aoReligar) {
     const linhas = balde.split('\n');
     balde = linhas.pop(); // o último pedaço pode estar incompleto: guarda pra depois
     for (const linha of linhas) {
-      if (linha.trim()) aoReceber(JSON.parse(linha));
+      if (!linha.trim()) continue;
+      const { tipo, dados } = JSON.parse(linha);
+      if (AO_RECEBER[tipo]) AO_RECEBER[tipo](dados);
     }
   });
 
-  ajudante.stderr.on('data', (erro) => console.error(`[${arquivo}]`, erro.toString()));
+  ajudante.stderr.on('data', (erro) => console.error('[ajudante]', erro.toString()));
 
   ajudante.on('exit', () => {
-    if (!app.isQuitting) setTimeout(() => aoReligar(ligarAjudante(arquivo, aoReceber, aoReligar)), 3000);
+    ajudante = null;
+    if (!app.isQuitting) setTimeout(ligarAjudante, 3000);
   });
-
-  return ajudante;
 }
 
-function ligarAjudanteMusica() {
-  const aoReceber = (estado) => janela.webContents.send('musica-mudou', estado);
-  const guardar = (processo) => (ajudanteMusica = processo);
-  guardar(ligarAjudante('musica.py', aoReceber, guardar));
-}
-
-// ---------- Jogos ----------
-
-let ilhaAberta = false;
-let jogoAberto = null; // nome do jogo, ou null
-
-function ligarAjudanteJogos() {
-  const aoReceber = ({ jogo }) => {
-    jogoAberto = jogo;
-    janela.webContents.send('jogo-mudou', jogo);
-    atualizarMedidor(); // jogando: mede o PC mesmo com a ilha fechada
-  };
-  ajudanteJogos = ligarAjudante('jogos.py', aoReceber, (processo) => (ajudanteJogos = processo));
+// Manda um comando pra uma parte do ajudante. Ex.: mandarPraAjudante('musica', 'proxima')
+function mandarPraAjudante(parte, comando) {
+  if (ajudante) ajudante.stdin.write(`${parte} ${comando}\n`);
 }
 
 // ---------- Desempenho do PC ----------
@@ -205,19 +226,11 @@ function lerWifi() {
 
 // ---------- Rádios (Wi-Fi e Bluetooth ligado/desligado) ----------
 
-function ligarAjudanteRadios() {
-  const aoReceber = (estado) => {
-    janela.webContents.send('radios-mudaram', estado);
-    lerWifi(); // ligou/desligou o Wi-Fi: atualiza o nome da rede na hora
-  };
-  ajudanteRadios = ligarAjudante('radios.py', aoReceber, (processo) => (ajudanteRadios = processo));
-}
-
 // Só esses comandos passam (a página não pode mandar qualquer coisa pro Python)
 const COMANDOS_DE_RADIO = ['wifi:ligar', 'wifi:desligar', 'bluetooth:ligar', 'bluetooth:desligar'];
 
 ipcMain.on('comando-radio', (_evento, comando) => {
-  if (COMANDOS_DE_RADIO.includes(comando) && ajudanteRadios) ajudanteRadios.stdin.write(comando + '\n');
+  if (COMANDOS_DE_RADIO.includes(comando)) mandarPraAjudante('radios', comando);
 });
 
 // Telas do Windows que a ilha pode abrir. São "endereços" especiais que o
@@ -257,13 +270,42 @@ ipcMain.on('mouse-na-ilha', (_evento, estaDentro) => {
   janela.setIgnoreMouseEvents(!estaDentro, { forward: true });
 });
 
+// Só passam os comandos conhecidos (e "ir_para:" seguido de um número)
+const COMANDOS_DE_MUSICA = ['tocar_pausar', 'proxima', 'anterior'];
+
 ipcMain.on('comando-musica', (_evento, comando) => {
-  if (ajudanteMusica) ajudanteMusica.stdin.write(comando + '\n');
+  if (COMANDOS_DE_MUSICA.includes(comando) || /^ir_para:\d+(\.\d+)?$/.test(comando)) {
+    mandarPraAjudante('musica', comando);
+  }
 });
+
+// ---------- Abrir junto com o Windows ----------
+// O Windows tem uma lista de programas que abrem quando você entra na conta
+// (fica no registro, em "Run"). O Electron sabe se colocar e se tirar dela.
+// process.execPath = o electron.exe | args = a pasta da ilha (o que ele deve abrir)
+const ITEM_DE_INICIALIZACAO = {
+  name: 'IlhaDoClaudinho',
+  path: process.execPath,
+  args: [path.resolve(__dirname)],
+};
+
+function abreComOWindows() {
+  return app.getLoginItemSettings(ITEM_DE_INICIALIZACAO).openAtLogin;
+}
+
+function mudarAbrirComOWindows(ligar) {
+  app.setLoginItemSettings({ ...ITEM_DE_INICIALIZACAO, openAtLogin: ligar });
+}
 
 // Botão direito na ilha: menuzinho
 ipcMain.on('abrir-menu', () => {
   Menu.buildFromTemplate([
+    {
+      label: 'Abrir junto com o Windows',
+      type: 'checkbox', // aparece com ✓ quando está ligado
+      checked: abreComOWindows(),
+      click: (item) => mudarAbrirComOWindows(item.checked),
+    },
     { label: 'Recarregar a ilha', click: () => janela.reload() },
     { type: 'separator' },
     { label: 'Fechar a ilha', click: () => app.quit() },
@@ -272,22 +314,34 @@ ipcMain.on('abrir-menu', () => {
 
 // ---------- Liga e desliga ----------
 
-app.whenReady().then(() => {
+function iniciarIlha() {
   criarJanela();
   // Espera a página da ilha carregar antes de mandar recados pra ela
   janela.webContents.once('did-finish-load', () => {
-    ligarAjudanteMusica();
-    ligarAjudanteJogos();
-    ligarAjudanteRadios();
+    ligarAjudante();
     lerWifi();
     setInterval(lerWifi, 10_000); // Wi-Fi muda pouco: olhar a cada 10 s basta
   });
-});
+}
+
+if (process.argv.includes('--iniciar-com-windows')) {
+  // Atalho pelo terminal: "npm run iniciar-com-windows" liga a opção e fecha,
+  // sem abrir a ilha. (No dia a dia, use a opção do menu do botão direito.)
+  app.whenReady().then(() => {
+    mudarAbrirComOWindows(true);
+    console.log('Pronto: a ilha vai abrir junto com o Windows.');
+    app.quit();
+  });
+} else if (!app.requestSingleInstanceLock()) {
+  // Só pode existir UMA ilha. Se já tem uma aberta (ex.: abriu com o Windows e
+  // depois você rodou "npm start"), essa segunda desiste e fecha na hora.
+  app.quit();
+} else {
+  app.whenReady().then(iniciarIlha);
+}
 
 app.on('before-quit', () => {
   app.isQuitting = true;
   liberarEspaco(); // devolve a faixa do topo pras outras janelas
-  if (ajudanteMusica) ajudanteMusica.kill();
-  if (ajudanteJogos) ajudanteJogos.kill();
-  if (ajudanteRadios) ajudanteRadios.kill();
+  if (ajudante) ajudante.kill();
 });

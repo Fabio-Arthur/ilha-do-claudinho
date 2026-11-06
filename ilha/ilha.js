@@ -161,7 +161,8 @@ function atualizarProgresso() {
 
   tempoAtual.textContent = formatarTempo(posicao);
   tempoTotal.textContent = formatarTempo(tempo.duracao);
-  trilho.style.setProperty('--progresso', (posicao / tempo.duracao) * 100 + '%');
+  // Coloca na ilha inteira: a barra da ilha aberta E a linha cartoon da fechada leem daqui
+  ilhaElemento.style.setProperty('--progresso', (posicao / tempo.duracao) * 100 + '%');
 }
 
 setInterval(atualizarProgresso, 500);
@@ -180,16 +181,33 @@ function preencherCartao(id, { valor, nivel, detalhe, morno, quente }) {
 
 let ultimasMedidas = null; // guardadas pra barra fechada mostrar durante o jogo
 
+// Um chip do modo foco gamer: número + cor de alerta
+function preencherChipGamer(id, texto, nivel, morno, quente) {
+  const chip = document.getElementById(id);
+  chip.querySelector('b').textContent = texto;
+  chip.classList.toggle('quente', nivel >= quente);
+  chip.classList.toggle('morno', nivel >= morno && nivel < quente);
+}
+
 window.ilha.quandoPcMudar((pc) => {
   ultimasMedidas = pc;
   atualizarTextoDaBarra();
+
+  // Modo foco gamer (só aparece durante um jogo, mas atualizar sempre não custa nada)
+  preencherChipGamer('gamer-cpu', pc.cpu + '%', pc.cpu, 70, 90);
+  preencherChipGamer('gamer-ram', pc.ram + '%', pc.ram, 75, 90);
+  if (pc.gpu) {
+    preencherChipGamer('gamer-gpu', pc.gpu.uso + '%', pc.gpu.uso, 70, 90);
+    const temperatura = Math.round(pc.gpu.temperatura);
+    preencherChipGamer('gamer-temperatura', temperatura + '°', temperatura, 75, 85);
+  }
 
   preencherCartao('cartao-cpu', { valor: pc.cpu + '%', nivel: pc.cpu, detalhe: 'Ryzen 7', morno: 70, quente: 90 });
 
   preencherCartao('cartao-ram', {
     valor: pc.ram + '%',
     nivel: pc.ram,
-    detalhe: `${pc.ramUsadaGb.toFixed(1)} de ${Math.round(pc.ramTotalGb)} GB`,
+    detalhe: `${pc.ramUsadaGb.toFixed(1)}/${Math.round(pc.ramTotalGb)} GB`, // "9.5/20 GB"
     morno: 75,
     quente: 90,
   });
@@ -198,7 +216,7 @@ window.ilha.quandoPcMudar((pc) => {
     preencherCartao('cartao-gpu', {
       valor: pc.gpu.uso + '%',
       nivel: pc.gpu.uso,
-      detalhe: `VRAM ${(pc.gpu.vramUsada / 1024).toFixed(1)}/${Math.round(pc.gpu.vramTotal / 1024)} GB`,
+      detalhe: `${(pc.gpu.vramUsada / 1024).toFixed(1)}/${Math.round(pc.gpu.vramTotal / 1024)} GB`, // memória da placa
       morno: 70,
       quente: 90,
     });

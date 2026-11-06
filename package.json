@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "icones": "node ferramentas/montar-icones.js"
+    "icones": "node ferramentas/montar-icones.js",
+    "iniciar-com-windows": "electron . --iniciar-com-windows"
   },
   "author": "Fabo",
   "license": "MIT",

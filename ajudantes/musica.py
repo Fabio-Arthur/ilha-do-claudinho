@@ -1,34 +1,20 @@
-# Ajudante da música da Ilha do Claudinho.
+# Parte da MÚSICA do ajudante da ilha (quem liga ela é o ajudante.py).
 #
 # O Windows tem um "controle de mídia" geral: é ele que aparece naquela caixinha
 # quando você aperta as teclas de volume. Todo player que se registra nele
 # (YouTube Music, Spotify, o navegador...) pode ser lido e controlado por aqui.
 #
-# Como ele conversa com a ilha:
-#   - ESCREVE (stdout): uma linha de JSON sempre que a música muda
-#   - LÊ (stdin): comandos "tocar_pausar", "proxima", "anterior" e "ir_para:SEGUNDOS"
+#   - avisa a ilha (enviar) sempre que a música muda
+#   - comandos que chegam: "tocar_pausar", "proxima", "anterior" e "ir_para:SEGUNDOS"
 
 import asyncio
 import base64
-import json
-import queue
-import sys
-import threading
 
 from winrt.windows.media.control import (
     GlobalSystemMediaTransportControlsSessionManager as GerenciadorDeMidia,
     GlobalSystemMediaTransportControlsSessionPlaybackStatus as StatusDoPlayer,
 )
 from winrt.windows.storage.streams import Buffer, DataReader, InputStreamOptions
-
-# Comandos que chegam da ilha ficam numa fila até o loop principal pegar
-comandos_pendentes = queue.Queue()
-
-
-def escutar_comandos():
-    """Roda numa thread separada, lendo os comandos que a ilha manda."""
-    for linha in sys.stdin:
-        comandos_pendentes.put(linha.strip())
 
 
 def escolher_sessao(gerenciador):
@@ -87,9 +73,9 @@ def ler_tempo(sessao):
         return None
 
 
-async def main():
+async def rodar(enviar, comandos_pendentes):
+    """enviar: função que manda um recado pra ilha | comandos_pendentes: fila de pedidos"""
     gerenciador = await GerenciadorDeMidia.request_async()
-    threading.Thread(target=escutar_comandos, daemon=True).start()
 
     ultimo_estado = None
     capa_guardada = {"musica": None, "imagem": None}
@@ -126,10 +112,7 @@ async def main():
 
         # 3) Só avisa a ilha se algo mudou
         if estado != ultimo_estado:
-            print(json.dumps(estado), flush=True)
+            enviar(estado)
             ultimo_estado = estado
 
         await asyncio.sleep(0.5)
-
-
-asyncio.run(main())

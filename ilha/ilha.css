@@ -172,9 +172,43 @@ button {
 }
 
 /* Jogando: a ilha fechada estica um pouco pra caber "GPU 72% · 68° · CPU 30%" */
+/* ===== Modo foco gamer =====
+   Jogando: a ilha fechada estica e vira um painel de desempenho.
+   Bluetooth/Wi-Fi/bateria e a data somem pra dar espaço. */
 #ilha.jogando {
-  --largura-fechada: 410px;
+  --largura-fechada: 400px;
 }
+
+#ilha.jogando .status { display: none; }
+#ilha.jogando:not(.aberta) .centro { display: none; }
+
+.gamer {
+  display: none;
+  flex: 1;
+  justify-content: center;
+  gap: 14px;
+}
+
+#ilha.jogando:not(.aberta) .gamer { display: flex; }
+
+.chip-gamer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums; /* números não "tremem" ao mudar */
+}
+
+.chip-gamer .icone {
+  width: 13px;
+  height: 13px;
+  color: var(--lavanda);
+}
+
+/* Mesmas cores de alerta dos cartões do PC */
+.chip-gamer.morno b { color: var(--amarelo); }
+.chip-gamer.quente b { color: var(--coral); }
+.chip-gamer.quente .icone { color: var(--coral); }
 
 #ilha.jogando .texto-barra {
   font-variant-numeric: tabular-nums; /* números não ficam "tremendo" ao mudar */
@@ -611,24 +645,133 @@ button {
 
 .trilho {
   flex: 1;
-  height: 4px;
-  border-radius: 4px;
-  background: rgb(255 255 255 / 0.12);
+  height: 8px;
   cursor: pointer;
-  transition: height 0.15s;
 }
 
-.trilho:hover {
-  height: 7px;
+/* ===== Estilo cartoon (vale pras duas linhas do tempo) =====
+   --progresso (0% a 100%) é o JS que coloca na #ilha; as duas linhas leem dele. */
+
+/* O "chão" da linha: escurinho e afundado (a sombra de dentro fica em cima) */
+.trilho,
+.estrada {
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: inset 0 2px 0 rgb(0 0 0 / 0.35);
 }
 
-.trilho i {
+/* A parte já tocada: tipo "gel" de desenho animado, em 3 camadas de fundo:
+   1) faixa de brilho branco em cima  2) listrinhas de bala  3) a cor da capa */
+.trilho i,
+.percorrido {
+  position: relative;
   display: block;
   height: 100%;
   width: var(--progresso, 0%);
   border-radius: inherit;
-  background: var(--cor-capa);
-  transition: background 0.6s;
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / 0.45) 0 30%, transparent 30%),
+    repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.22) 0 4px, transparent 4px 8px),
+    var(--cor-capa);
+  /* 11.31px = tamanho de 1 "listra + espaço" na horizontal (8px na diagonal / sen 45°) */
+  background-size: auto, 11.31px 11.31px, auto;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.25); /* sombrinha embaixo: dá volume */
+  transition: width 0.5s linear;
+  animation: listras-andando 0.6s linear infinite;
+  animation-play-state: paused; /* listras paradas até a música tocar */
+}
+
+#ilha.tocando .trilho i,
+#ilha.tocando .percorrido {
+  animation-play-state: running;
+}
+
+/* Empurra só a camada das listras pro lado: parece que elas andam */
+@keyframes listras-andando {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 0 0, 11.31px 0, 0 0; }
+}
+
+/* Bolinha na ponta da barra da ilha aberta (o "pino" que você arrasta com o olho) */
+.trilho i::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--cor-capa);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.4);
+  transition: scale 0.15s var(--molinha);
+}
+
+.trilho:hover i::after {
+  scale: 1.2;
+}
+
+/* ===== Linha do tempo da ilha FECHADA ===== */
+.linha-do-tempo {
+  display: none;
+  flex-shrink: 0;
+  height: 12px;
+  padding: 2px 24px 0; /* longe das bordas redondas da ilha */
+}
+
+/* Com música (e com tempo), fora do modo jogo e com a ilha fechada:
+   a ilha cresce um pouquinho pra caber a linha */
+#ilha:not(.sem-som):not(.sem-tempo):not(.jogando):not(.aberta) {
+  height: calc(var(--altura-fechada) + 12px);
+}
+
+#ilha:not(.sem-som):not(.sem-tempo):not(.jogando):not(.aberta) .linha-do-tempo {
+  display: block;
+}
+
+.estrada {
+  position: relative;
+  height: 6px;
+}
+
+/* --- O mini Claudinho corredor --- */
+.corredor {
+  position: absolute;
+  bottom: calc(100% - 1px); /* em pé em cima da linha */
+  left: var(--progresso, 0%);
+  width: 13px;
+  height: 11px;
+  translate: -50% 0; /* o meio dele fica na posição da música */
+  filter: drop-shadow(0 1px 0 rgb(0 0 0 / 0.7)); /* contorninho de desenho animado */
+  transition: left 0.5s linear;
+}
+
+/* Parado: só o primeiro par de perninhas aparece */
+.corredor .pernas-b {
+  opacity: 0;
+}
+
+/* Tocando: ele quica e as perninhas se alternam (= passinhos) */
+#ilha.tocando .corredor {
+  animation: quicar 0.3s ease-in-out infinite alternate;
+}
+
+#ilha.tocando .corredor .pernas-a { animation: passo-a 0.3s steps(1) infinite; }
+#ilha.tocando .corredor .pernas-b { animation: passo-b 0.3s steps(1) infinite; }
+
+@keyframes quicar {
+  to { transform: translateY(-2px); }
+}
+
+@keyframes passo-a {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes passo-b {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 /* --- Botões --- */
@@ -710,19 +853,21 @@ button {
   /* minmax(0, 1fr) = colunas SEMPRE iguais, mesmo se um texto for maior
      (só "1fr" deixa a coluna esticar pra caber o texto) */
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
   align-items: stretch;
+
+  /* Um retângulo só pra todas as medidas.
+     Mais claro em cima, mais escuro embaixo: parece que a luz vem de cima. */
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 18px;
+  padding: 12px 0;
 }
 
 .cartao {
   /* --nivel (0% a 100%) é o JS que coloca: enche a barrinha */
   --cor-nivel: var(--lavanda);
 
-  /* Mais claro em cima, mais escuro embaixo: parece que a luz vem de cima */
-  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
-  border: 1px solid rgb(255 255 255 / 0.06);
-  border-radius: 16px;
-  padding: 12px 10px;
+  padding: 0 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -773,6 +918,12 @@ button {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Divisória fininha entre as medidas. "+" = todo cartão que vem DEPOIS de outro
+   (ou seja, todos menos o primeiro) ganha uma linha do lado esquerdo. */
+.cartao + .cartao {
+  border-left: 1px solid rgb(255 255 255 / 0.08);
 }
 
 /* Cores de alerta: o JS põe "morno" ou "quente" quando o número sobe */

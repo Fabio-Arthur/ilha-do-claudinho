@@ -1,31 +1,20 @@
-# Ajudante dos rádios da Ilha do Claudinho: Wi-Fi e Bluetooth.
+# Parte dos RÁDIOS do ajudante da ilha: Wi-Fi e Bluetooth (quem liga ela é o ajudante.py).
 #
 # O Windows chama de "rádio" tudo que manda sinal sem fio. Pela mesma função
 # dá pra ver se está ligado e ligar/desligar (é o que o botão das
 # Configurações Rápidas faz).
 #
-# Como ele conversa com a ilha:
-#   - ESCREVE (stdout): {"wifi": true/false/null, "bluetooth": true/false/null} quando muda
-#     (null = o notebook não tem esse rádio)
-#   - LÊ (stdin): "wifi:ligar", "wifi:desligar", "bluetooth:ligar", "bluetooth:desligar"
+#   - avisa a ilha quando muda: {"wifi": True/False/None, "bluetooth": True/False/None}
+#     (None = o notebook não tem esse rádio)
+#   - comandos que chegam: "wifi:ligar", "wifi:desligar", "bluetooth:ligar", "bluetooth:desligar"
 
 import asyncio
-import json
-import queue
 import sys
-import threading
 
 from winrt.windows.devices.radios import Radio, RadioKind, RadioState
 
-comandos_pendentes = queue.Queue()
-
 # Nome que a ilha usa → tipo de rádio do Windows
 TIPOS = {"wifi": RadioKind.WI_FI, "bluetooth": RadioKind.BLUETOOTH}
-
-
-def escutar_comandos():
-    for linha in sys.stdin:
-        comandos_pendentes.put(linha.strip())
 
 
 async def achar_radio(nome):
@@ -50,9 +39,8 @@ async def ler_estado():
     return estado
 
 
-async def main():
+async def rodar(enviar, comandos_pendentes):
     await Radio.request_access_async()  # pede permissão pro Windows (só na primeira vez)
-    threading.Thread(target=escutar_comandos, daemon=True).start()
 
     ultimo_estado = None
     while True:
@@ -64,10 +52,7 @@ async def main():
 
         estado = await ler_estado()
         if estado != ultimo_estado:
-            print(json.dumps(estado), flush=True)
+            enviar(estado)
             ultimo_estado = estado
 
         await asyncio.sleep(1)
-
-
-asyncio.run(main())

@@ -43,6 +43,22 @@
           <svg class="icone icone-jogo" aria-hidden="true"><use href="#i-gamepad-2" /></svg>
           <span id="texto-barra" class="texto-barra"></span>
         </div>
+        <!-- Modo foco gamer: só aparece durante um jogo, com a ilha fechada -->
+        <div class="gamer">
+          <span class="chip-gamer" id="gamer-gpu" title="Uso da placa de vídeo">
+            <svg class="icone"><use href="#i-monitor" /></svg><b>—</b>
+          </span>
+          <span class="chip-gamer" id="gamer-temperatura" title="Temperatura da placa de vídeo">
+            <svg class="icone"><use href="#i-thermometer" /></svg><b>—</b>
+          </span>
+          <span class="chip-gamer" id="gamer-cpu" title="Uso do processador">
+            <svg class="icone"><use href="#i-cpu" /></svg><b>—</b>
+          </span>
+          <span class="chip-gamer" id="gamer-ram" title="Uso da memória RAM">
+            <svg class="icone"><use href="#i-memory-stick" /></svg><b>—</b>
+          </span>
+        </div>
+
         <nav class="abas">
           <button data-aba="musica"><svg class="icone"><use href="#i-music" /></svg>Música</button>
           <!-- Durante um jogo, o JS troca o ícone pro controle e o texto pro nome do jogo -->
@@ -76,6 +92,31 @@
             <span id="bateria-texto" class="bateria-texto"></span>
           </span>
         </button>
+      </div>
+
+      <!-- ===== Linha do tempo cartoon: só com música e a ilha FECHADA ===== -->
+      <div class="linha-do-tempo" aria-hidden="true">
+        <div class="estrada">
+          <i class="percorrido"></i>
+          <!-- Mini Claudinho correndo na posição da música.
+               Tem dois pares de perninhas: o CSS alterna entre eles = passinhos. -->
+          <svg class="corredor" viewBox="0 0 16 13" shape-rendering="crispEdges">
+            <rect x="3" y="4" width="10" height="6" fill="#d97757" />
+            <rect x="1" y="6" width="2" height="2" fill="#d97757" />
+            <rect x="13" y="6" width="2" height="2" fill="#d97757" />
+            <rect x="3" y="9" width="10" height="1" fill="#b85c3e" />
+            <rect x="5" y="5" width="1" height="2" fill="#1e1f29" />
+            <rect x="10" y="5" width="1" height="2" fill="#1e1f29" />
+            <g class="pernas-a">
+              <rect x="4" y="10" width="1" height="3" fill="#d97757" />
+              <rect x="9" y="10" width="1" height="3" fill="#d97757" />
+            </g>
+            <g class="pernas-b">
+              <rect x="6" y="10" width="1" height="3" fill="#d97757" />
+              <rect x="11" y="10" width="1" height="3" fill="#d97757" />
+            </g>
+          </svg>
+        </div>
       </div>
 
       <!-- ===== Parte de baixo: só aparece quando a ilha abre ===== -->

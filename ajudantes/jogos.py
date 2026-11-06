@@ -1,14 +1,13 @@
-# Ajudante dos jogos da Ilha do Claudinho.
+# Parte dos JOGOS do ajudante da ilha (quem liga ela é o ajudante.py).
 #
 # A cada 3 segundos olha os programas abertos e descobre se algum é jogo.
 # Como saber? Pelo LUGAR onde ele está instalado: jogos da Steam, Riot, Epic
 # e Xbox sempre ficam em pastas com nomes conhecidos.
 #
-# Escreve (stdout) uma linha de JSON quando muda: {"jogo": "VALORANT"} ou {"jogo": null}
+# Avisa a ilha quando muda: {"jogo": "VALORANT"} ou {"jogo": None}
 
-import json
+import asyncio
 import re
-import time
 
 import psutil
 
@@ -42,11 +41,14 @@ def procurar_jogo():
     return None
 
 
-ultimo_jogo = "nada ainda"  # valor que nunca acontece, pra sempre avisar na primeira volta
+async def rodar(enviar):
+    ultimo_jogo = "nada ainda"  # valor que nunca acontece, pra sempre avisar na primeira volta
 
-while True:
-    jogo = procurar_jogo()
-    if jogo != ultimo_jogo:
-        print(json.dumps({"jogo": jogo}), flush=True)
-        ultimo_jogo = jogo
-    time.sleep(3)
+    while True:
+        # Olhar todos os programas demora um pouquinho: roda numa thread separada
+        # pra não travar a música e os rádios enquanto isso
+        jogo = await asyncio.to_thread(procurar_jogo)
+        if jogo != ultimo_jogo:
+            enviar({"jogo": jogo})
+            ultimo_jogo = jogo
+        await asyncio.sleep(3)
