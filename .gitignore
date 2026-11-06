@@ -1,0 +1,8 @@
+# Dependências: cada um instala com "npm install" e o requirements.txt
+node_modules/
+ajudantes/.venv/
+__pycache__/
+
+# Coisas do sistema
+desktop.ini
+Thumbs.db

@@ -1,0 +1,19 @@
+{
+  "name": "ilha-do-claudinho",
+  "version": "0.1.0",
+  "description": "Ilha dinâmica no topo da tela do Windows, com o Claudinho morando nela",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "icones": "node ferramentas/montar-icones.js"
+  },
+  "author": "Fabo",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "lucide-static": "^1.70.0"
+  },
+  "dependencies": {
+    "koffi": "^3.3.7"
+  }
+}

@@ -1,0 +1,887 @@
+/* ===== Cores (tema Espaço Noturno) ===== */
+:root {
+  --fundo-ilha: #05060d;
+  --lavanda: #a68cff;
+  --laranja: #d97757;
+  --amarelo: #ffc861;
+  --coral: #ff7a7a;
+  --texto: #ece9ff;
+  --texto-fraco: #8d89ad;
+
+  --verde: #7ee0a1;
+
+  /* Tamanhos da ilha fechada e aberta */
+  --largura-fechada: 340px;
+  --altura-fechada: 36px;
+  --largura-aberta: 440px;
+  --altura-aberta: 184px;
+
+  /* A "molinha" da animação: passa um pouquinho do ponto e volta */
+  --molinha: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Pra fechar: rápida e sem passar do ponto (fechar com molinha parece "quicar") */
+  --suave: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Tamanho das orelhinhas curvas que ligam a ilha à borda da tela */
+  --orelha: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* A página inteira é invisível: só a ilha aparece */
+html,
+body {
+  background: transparent;
+  overflow: hidden;
+  height: 100%;
+  font-family: 'Inter', 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+  color: var(--texto);
+  user-select: none;
+}
+
+body {
+  display: flex;
+  justify-content: center; /* ilha no meio, colada no topo */
+}
+
+/* ===== Ícones (Lucide) =====
+   O "estoque" de desenhos fica escondido; cada ícone na página só aponta pra ele. */
+.sprite-icones {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* Todo ícone tem o tamanho da letra em volta e a cor do texto (currentColor).
+   Traço 1.75 em vez de 2: um pouquinho mais fino, mais minimalista. */
+.icone {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ===== A ilha ===== */
+#ilha {
+  /* Cor tirada da capa da música (o JS troca). Sem música: lavanda. */
+  --cor-capa: var(--lavanda);
+
+  position: relative;
+  width: var(--largura-fechada);
+  height: var(--altura-fechada);
+  background: var(--fundo-ilha);
+  /* Cantos de cima retos (colados na borda da tela), de baixo redondos: cara de "notch" */
+  border-radius: 0 0 18px 18px;
+  /* FECHANDO: rápido e suave. (A transição que vale é a do estado de DESTINO.) */
+  transition:
+    width 0.3s var(--suave),
+    height 0.3s var(--suave),
+    border-radius 0.3s var(--suave),
+    box-shadow 0.6s;
+}
+
+/* ABRINDO: mais devagar e com molinha */
+#ilha.aberta {
+  transition:
+    width 0.5s var(--molinha),
+    height 0.5s var(--molinha),
+    border-radius 0.5s var(--molinha),
+    box-shadow 0.6s;
+}
+
+/* ===== Orelhinhas =====
+   Dois quadradinhos grudados nos lados de cima da ilha. Cada um é pintado com
+   um "radial-gradient": um círculo transparente no canto de baixo, e cor fora
+   dele. O que sobra é uma curva pra dentro, como se a ilha "escorresse" da borda. */
+#ilha::before,
+#ilha::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: var(--orelha);
+  height: var(--orelha);
+}
+
+#ilha::before {
+  left: calc(-1 * var(--orelha));
+  background: radial-gradient(
+    circle at 0 100%,
+    transparent calc(var(--orelha) - 0.5px),
+    var(--fundo-ilha) var(--orelha)
+  );
+}
+
+#ilha::after {
+  right: calc(-1 * var(--orelha));
+  background: radial-gradient(
+    circle at 100% 100%,
+    transparent calc(var(--orelha) - 0.5px),
+    var(--fundo-ilha) var(--orelha)
+  );
+}
+
+/* O miolo é quem corta o conteúdo nas bordas redondas */
+.miolo {
+  position: relative;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Um fiozinho de luz na borda de baixo: dá "volume" sem chamar atenção */
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.07);
+}
+
+/* Tudo dentro do miolo fica na frente da capa borrada */
+.miolo > :not(.capa-fundo) {
+  position: relative;
+}
+
+/* ===== Capa borrada de fundo ===== */
+.capa-fundo {
+  position: absolute;
+  inset: -40px; /* maior que a ilha: o borrão não deixa borda clara */
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  filter: blur(36px) saturate(1.6);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+
+/* Só aparece com a ilha aberta, na aba Música, com música e com capa */
+#ilha.aberta[data-aba='musica']:not(.sem-som) .capa-fundo[src] {
+  opacity: 0.35;
+}
+
+/* Jogando: a ilha fechada estica um pouco pra caber "GPU 72% · 68° · CPU 30%" */
+#ilha.jogando {
+  --largura-fechada: 410px;
+}
+
+#ilha.jogando .texto-barra {
+  font-variant-numeric: tabular-nums; /* números não ficam "tremendo" ao mudar */
+}
+
+/* Nome do jogo grande na aba não pode empurrar o resto */
+.abas button {
+  max-width: 190px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tocando música: a ilha brilha com a cor da capa */
+#ilha.tocando {
+  box-shadow: 0 0 16px -2px color-mix(in srgb, var(--cor-capa) 60%, transparent);
+}
+
+#ilha.aberta {
+  --orelha: 16px;
+  width: var(--largura-aberta);
+  height: var(--altura-aberta);
+  border-radius: 0 0 32px 32px;
+  box-shadow:
+    0 0 22px -4px color-mix(in srgb, var(--cor-capa) 55%, transparent),
+    0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+/* ===== Barra de cima ===== */
+.barra {
+  height: var(--altura-fechada);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.claudinho {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+/* O Claudinho pisca: os olhos "achatam" rapidinho a cada 4 segundos */
+.claudinho .olho {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: piscar 4s infinite;
+}
+
+@keyframes piscar {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+/* Com música tocando, o Claudinho dança: balança pra um lado e pro outro */
+#ilha.tocando .claudinho {
+  animation: dancar-claudinho 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes dancar-claudinho {
+  from { transform: translateY(0) rotate(-8deg); }
+  to { transform: translateY(-2px) rotate(8deg); }
+}
+
+/* Ao abrir, o Claudinho dá um pulinho de "oi!" */
+#ilha.aberta .claudinho {
+  animation: pulinho 0.45s var(--molinha);
+}
+
+@keyframes pulinho {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-5px) scale(1.1); }
+  100% { transform: translateY(0); }
+}
+
+/* Mas se tiver música, a dança ganha do pulinho (regra que vem depois vence) */
+#ilha.aberta.tocando .claudinho {
+  animation: dancar-claudinho 0.5s ease-in-out infinite alternate;
+}
+
+/* ===== Centro da barra: capinha + texto ===== */
+.centro {
+  flex: 1;
+  min-width: 0; /* deixa o "..." funcionar */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+/* Controlezinho de videogame na barra fechada: só no modo jogo */
+.icone-jogo {
+  display: none;
+  width: 15px;
+  height: 15px;
+  color: var(--lavanda);
+}
+
+#ilha.jogando .icone-jogo {
+  display: block;
+}
+
+/* Nome do jogo grande na aba vira "..." */
+#texto-aba-pc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.capa-mini {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: none;
+}
+
+/* A capinha só aparece com música, capa e fora do modo jogo */
+#ilha:not(.sem-som):not(.jogando) .capa-mini[src] {
+  display: block;
+}
+
+.texto-barra {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* texto grande vira "..." */
+}
+
+/* Sem música, a data fica mais discreta que a hora */
+#ilha.sem-som:not(.jogando) .texto-barra {
+  color: var(--texto-fraco);
+}
+
+/* ===== Relógio ===== */
+.relogio {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums; /* os segundos mudam sem o texto "pular" */
+  flex-shrink: 0;
+}
+
+.relogio .segundos {
+  color: var(--texto-fraco);
+  font-weight: 600;
+}
+
+/* Sem música, as ondinhas somem (não tem o que dançar) */
+#ilha.sem-som .ondinhas {
+  display: none;
+}
+
+/* ===== Status: Wi-Fi e bateria ===== */
+/* O status inteiro é um botão: clicar abre a aba Conexões */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  margin-right: -8px; /* compensa o padding pra não desalinhar da borda */
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.status:hover,
+#ilha.aberta[data-aba='conexoes'] .status {
+  background: rgb(255 255 255 / 0.1);
+}
+
+/* --- Wi-Fi (leque de 3 gomos) --- */
+.wifi {
+  width: 17px;
+  height: 14px;
+  fill: currentColor;
+  /* Uma bordinha da mesma cor arredonda as pontas dos gomos */
+  stroke: currentColor;
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+
+/* Gomo apagado fica fraquinho; o JS põe "aceso" nos que o sinal alcança */
+.wifi .gomo {
+  opacity: 0.25;
+  transition: opacity 0.3s;
+}
+
+.wifi .gomo.aceso {
+  opacity: 1;
+}
+
+/* Rádio do Wi-Fi desligado: o leque inteiro fica apagado e avermelhado */
+.wifi.desligado {
+  color: var(--coral);
+}
+
+/* --- Bluetooth --- */
+.bluetooth {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+  opacity: 0.35; /* desligado: fraquinho */
+  transition: opacity 0.3s, color 0.3s;
+}
+
+.bluetooth.ligado {
+  opacity: 1;
+  color: var(--lavanda);
+}
+
+/* Notebook sem Bluetooth: nem mostra */
+.bluetooth.nao-tem {
+  display: none;
+}
+
+.bateria {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* O "corpo" da pilha, com o biquinho do lado feito com ::after */
+.bateria-corpo {
+  position: relative;
+  width: 22px;
+  height: 11px;
+  border: 1.5px solid rgb(255 255 255 / 0.55);
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.bateria-corpo::after {
+  content: '';
+  position: absolute;
+  right: -4px;
+  top: 2.5px;
+  width: 2px;
+  height: 3px;
+  border-radius: 0 1px 1px 0;
+  background: rgb(255 255 255 / 0.55);
+}
+
+.bateria-carga {
+  display: block;
+  height: 100%;
+  width: var(--carga, 100%);
+  border-radius: 1px;
+  background: var(--texto);
+  transition: width 0.6s, background 0.3s;
+}
+
+/* Raiozinho de "carregando": só aparece na tomada */
+.bateria .raio {
+  display: none;
+  width: 11px;
+  height: 11px;
+  color: var(--verde);
+  fill: currentColor;
+  margin-right: -2px;
+}
+
+.bateria.carregando .raio { display: block; }
+.bateria.carregando .bateria-carga { background: var(--verde); }
+.bateria.baixa .bateria-carga { background: var(--coral); }
+.bateria.baixa .bateria-texto { color: var(--coral); }
+
+/* ===== Abas (só aparecem com a ilha aberta) ===== */
+.abas {
+  flex: 1;
+  display: none;
+  justify-content: center;
+  gap: 4px;
+}
+
+#ilha.aberta .centro { display: none; }
+#ilha.aberta .abas { display: flex; }
+
+.abas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--texto-fraco);
+  transition: background 0.2s, color 0.2s;
+}
+
+.abas button:hover {
+  color: var(--texto);
+}
+
+/* Aba escolhida fica acesa. O seletor lê: "botão cuja aba é igual à da ilha" */
+#ilha[data-aba='musica'] .abas [data-aba='musica'],
+#ilha[data-aba='pc'] .abas [data-aba='pc'] {
+  background: rgb(255 255 255 / 0.1);
+  color: var(--texto);
+}
+
+/* ===== Barrinhas da música ===== */
+.ondinhas {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+  width: 18px;
+}
+
+.ondinhas i {
+  width: 3px;
+  height: 30%;
+  border-radius: 2px;
+  background: var(--cor-capa);
+  transition: background 0.6s;
+  animation: dancar 0.9s ease-in-out infinite alternate;
+  animation-play-state: paused; /* paradas até ter música tocando */
+}
+
+/* Cada barrinha começa num ponto diferente, senão elas dançam iguais */
+.ondinhas i:nth-child(2) { animation-delay: -0.3s; }
+.ondinhas i:nth-child(3) { animation-delay: -0.6s; }
+.ondinhas i:nth-child(4) { animation-delay: -0.15s; }
+
+#ilha.tocando .ondinhas i {
+  animation-play-state: running;
+}
+
+@keyframes dancar {
+  from { height: 25%; }
+  to { height: 100%; }
+}
+
+/* ===== Painel (parte que aparece ao abrir) ===== */
+.painel {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 22px 20px;
+  opacity: 0;
+  /* Fechada: o conteúdo fica um pouquinho pra cima e menor, "guardado" */
+  transform: translateY(-10px) scale(0.96);
+  transition:
+    opacity 0.15s,
+    transform 0.3s var(--suave);
+}
+
+#ilha.aberta .painel {
+  opacity: 1;
+  transform: none; /* desce pro lugar com a molinha */
+  transition:
+    opacity 0.25s 0.1s,
+    transform 0.5s 0.05s var(--molinha); /* o 2º tempo é a espera antes de começar */
+}
+
+/* Só a aba escolhida aparece */
+.aba-musica,
+.aba-pc,
+.aba-conexoes {
+  display: none;
+  height: 100%;
+}
+
+#ilha[data-aba='musica'] .aba-musica { display: block; }
+#ilha[data-aba='pc'] .aba-pc { display: grid; }
+#ilha[data-aba='conexoes'] .aba-conexoes { display: grid; }
+
+/* ===== Aba Música ===== */
+.musica {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  height: 100%;
+}
+
+.capa {
+  width: 108px;
+  height: 108px;
+  border-radius: 16px;
+  object-fit: cover;
+  background: #1a1c2e;
+  flex-shrink: 0;
+  /* Sombra com a cor da capa: parece que a capa "acende" o fundo */
+  box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--cor-capa) 70%, transparent);
+  transition: transform 0.3s var(--molinha);
+}
+
+/* Pausado, a capa encolhe um pouquinho (igual no celular) */
+#ilha:not(.tocando) .capa {
+  transform: scale(0.92);
+}
+
+.musica-info {
+  flex: 1;
+  min-width: 0; /* deixa o "..." funcionar dentro do flex */
+}
+
+.titulo,
+.artista {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.titulo {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.artista {
+  font-size: 13px;
+  color: var(--texto-fraco);
+  margin-top: 2px;
+}
+
+/* --- Barrinha de progresso --- */
+.progresso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--texto-fraco);
+  font-variant-numeric: tabular-nums; /* números com a mesma largura: não fica "tremendo" */
+}
+
+/* Se o player não diz o tempo, a barrinha some */
+#ilha.sem-tempo .progresso { visibility: hidden; }
+
+.trilho {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.12);
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.trilho:hover {
+  height: 7px;
+}
+
+.trilho i {
+  display: block;
+  height: 100%;
+  width: var(--progresso, 0%);
+  border-radius: inherit;
+  background: var(--cor-capa);
+  transition: background 0.6s;
+}
+
+/* --- Botões --- */
+.botoes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.botoes button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.botoes button svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.botoes button:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.botoes button:active {
+  transform: scale(0.88); /* "afunda" ao clicar */
+}
+
+.botoes .botao-principal {
+  width: 40px;
+  height: 40px;
+  background: var(--cor-capa);
+  color: var(--fundo-ilha);
+  transition: transform 0.15s, background 0.6s, filter 0.15s;
+}
+
+.botoes .botao-principal:hover {
+  background: var(--cor-capa);
+  filter: brightness(1.15);
+}
+
+/* Mostra o ícone certo: ▶ quando pausado, ⏸ quando tocando */
+.icone-pausar { display: none; }
+#ilha.tocando .icone-tocar { display: none; }
+#ilha.tocando .icone-pausar { display: block; }
+
+/* --- Sem música --- */
+.sem-musica {
+  display: none;
+  height: 100%;
+  place-content: center;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.sem-musica small {
+  color: var(--texto-fraco);
+}
+
+.sem-musica .icone-grande {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 6px;
+  color: var(--lavanda);
+  stroke-width: 1.5;
+}
+
+#ilha.sem-som .musica { display: none; }
+#ilha.sem-som .sem-musica { display: grid; }
+
+/* ===== Aba PC ===== */
+.aba-pc {
+  /* minmax(0, 1fr) = colunas SEMPRE iguais, mesmo se um texto for maior
+     (só "1fr" deixa a coluna esticar pra caber o texto) */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+.cartao {
+  /* --nivel (0% a 100%) é o JS que coloca: enche a barrinha */
+  --cor-nivel: var(--lavanda);
+
+  /* Mais claro em cima, mais escuro embaixo: parece que a luz vem de cima */
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 16px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cartao .rotulo,
+.conexao .rotulo {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-fraco);
+}
+
+/* O ícone do rótulo fica lavanda pra dar um toque de cor */
+.cartao .rotulo .icone,
+.conexao .rotulo .icone {
+  width: 13px;
+  height: 13px;
+  color: var(--lavanda);
+}
+
+.cartao .valor {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cartao .medidor {
+  height: 4px;
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.1);
+  margin-top: auto; /* empurra a barrinha pro fundo do cartão */
+}
+
+.cartao .medidor i {
+  display: block;
+  height: 100%;
+  width: var(--nivel, 0%);
+  border-radius: inherit;
+  background: var(--cor-nivel);
+  transition: width 0.6s ease, background 0.3s;
+}
+
+.cartao .detalhe {
+  font-size: 10px;
+  color: var(--texto-fraco);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cores de alerta: o JS põe "morno" ou "quente" quando o número sobe */
+.cartao.morno { --cor-nivel: var(--amarelo); }
+.cartao.quente { --cor-nivel: var(--coral); }
+.cartao.quente .valor { color: var(--coral); }
+
+.cartao.em-breve {
+  opacity: 0.45;
+}
+
+/* ===== Aba Conexões ===== */
+.aba-conexoes {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Mesmo visual dos cartões do PC */
+.conexao {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 16px;
+  padding: 10px 10px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.conexao-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px; /* espaço mínimo entre o nome e a chavinha */
+  min-height: 20px;
+}
+
+/* A chavinha nunca encolhe; quem cede espaço é o nome */
+.conexao-topo .chave {
+  flex-shrink: 0;
+}
+
+
+.conexao-valor {
+  font-size: 15px;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conexao-detalhe {
+  font-size: 10px;
+  color: var(--texto-fraco);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Linkzinho que abre a tela do Windows, sempre no pé do cartão */
+.conexao-link {
+  margin-top: auto;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--lavanda);
+  padding: 3px 0;
+}
+
+.conexao-link:hover {
+  text-decoration: underline;
+}
+
+/* --- Chavinha liga/desliga ---
+   É só um botão: o fundo é o "trilho" e o ::after é a bolinha que anda. */
+.chave {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  transition: background 0.25s;
+}
+
+.chave::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--texto);
+  transition: transform 0.3s var(--molinha);
+}
+
+.chave.ligada {
+  background: var(--lavanda);
+}
+
+.chave.ligada::after {
+  transform: translateX(14px);
+}
+
+/* Esperando o Windows obedecer: pisca de leve */
+.chave.esperando {
+  animation: esperando 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes esperando {
+  to { opacity: 0.5; }
+}

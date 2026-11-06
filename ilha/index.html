@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Só deixa rodar o que é da própria ilha (segurança) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'" />
+    <title>Ilha do Claudinho</title>
+    <link rel="stylesheet" href="ilha.css" />
+    <!-- Os ícones vêm antes: o ilha.js já encontra todos prontos -->
+    <script src="icones.js" defer></script>
+    <script src="ilha.js" defer></script>
+  </head>
+  <body>
+    <div id="ilha" class="fechada sem-som" data-aba="musica">
+      <!-- O "miolo" corta o que passa da borda. A #ilha em si fica livre pra
+           desenhar as orelhinhas curvas pra fora (igual o notch do MacBook). -->
+      <div class="miolo">
+      <!-- Capa da música bem borrada, de fundo (só na aba Música aberta) -->
+      <img id="capa-fundo" class="capa-fundo" alt="" />
+
+      <!-- ===== Parte de cima: sempre aparece ===== -->
+      <div class="barra">
+        <!-- O Claudinho em pixel art (mesmo desenho da Casinha) -->
+        <svg class="claudinho" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">
+          <rect x="3" y="4" width="10" height="6" fill="#d97757" />
+          <rect x="1" y="6" width="2" height="2" fill="#d97757" />
+          <rect x="13" y="6" width="2" height="2" fill="#d97757" />
+          <rect x="3" y="9" width="10" height="1" fill="#b85c3e" />
+          <rect x="4" y="10" width="1" height="2" fill="#d97757" />
+          <rect x="6" y="10" width="1" height="2" fill="#d97757" />
+          <rect x="9" y="10" width="1" height="2" fill="#d97757" />
+          <rect x="11" y="10" width="1" height="2" fill="#d97757" />
+          <rect class="olho" x="5" y="5" width="1" height="2" fill="#1e1f29" />
+          <rect class="olho" x="10" y="5" width="1" height="2" fill="#1e1f29" />
+        </svg>
+
+        <!-- Hora e minuto fortes, segundos mais clarinhos -->
+        <span class="relogio"><span id="hora-minuto"></span><span id="segundos" class="segundos"></span></span>
+
+        <!-- Fechada: mostra a música (com capinha), o jogo ou a data. Aberta: vira as abas. -->
+        <div class="centro">
+          <img id="capa-mini" class="capa-mini" alt="" />
+          <svg class="icone icone-jogo" aria-hidden="true"><use href="#i-gamepad-2" /></svg>
+          <span id="texto-barra" class="texto-barra"></span>
+        </div>
+        <nav class="abas">
+          <button data-aba="musica"><svg class="icone"><use href="#i-music" /></svg>Música</button>
+          <!-- Durante um jogo, o JS troca o ícone pro controle e o texto pro nome do jogo -->
+          <button data-aba="pc">
+            <svg class="icone"><use id="icone-aba-pc" href="#i-cpu" /></svg><span id="texto-aba-pc">PC</span>
+          </button>
+        </nav>
+
+        <!-- Barrinhas que dançam quando tem música tocando -->
+        <div class="ondinhas" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+        </div>
+
+        <!-- Status, igual no canto do celular. Clicar abre a aba Conexões. -->
+        <button class="status" id="status" title="Conexões">
+          <!-- Bluetooth: o "B" de runa. Some se o notebook não tiver Bluetooth. -->
+          <svg id="bluetooth" class="icone bluetooth" aria-hidden="true"><use href="#i-bluetooth" /></svg>
+
+          <!-- Wi-Fi: um "leque" de 3 gomos; o JS acende quantos o sinal merece.
+               Cada gomo é um pedaço de anel com centro no ponto (12, 20). -->
+          <svg id="wifi" class="wifi" viewBox="0 1.5 24 19" aria-hidden="true">
+            <path class="gomo" d="M12 20 L8.46 16.46 A5 5 0 0 1 15.54 16.46 Z" />
+            <path class="gomo" d="M4.58 12.58 A10.5 10.5 0 0 1 19.42 12.58 L16.6 15.4 A6.5 6.5 0 0 0 7.4 15.4 Z" />
+            <path class="gomo" d="M0.6 8.6 A16.1 16.1 0 0 1 23.4 8.6 L20.49 11.51 A12 12 0 0 0 3.51 11.51 Z" />
+          </svg>
+
+          <!-- Bateria: o "recheio" cresce com a carga -->
+          <span id="bateria" class="bateria">
+            <span class="bateria-corpo"><i class="bateria-carga"></i></span>
+            <svg class="icone raio" aria-hidden="true"><use href="#i-zap" /></svg>
+            <span id="bateria-texto" class="bateria-texto"></span>
+          </span>
+        </button>
+      </div>
+
+      <!-- ===== Parte de baixo: só aparece quando a ilha abre ===== -->
+      <div class="painel">
+        <!-- --- Aba Música --- -->
+        <section class="aba-musica">
+          <div class="musica">
+            <img id="capa" class="capa" alt="" />
+            <div class="musica-info">
+              <div id="titulo" class="titulo"></div>
+              <div id="artista" class="artista"></div>
+
+              <div id="progresso" class="progresso">
+                <span id="tempo-atual">0:00</span>
+                <div id="trilho" class="trilho" title="Clique pra pular pra essa parte">
+                  <i id="preenchido"></i>
+                </div>
+                <span id="tempo-total">0:00</span>
+              </div>
+
+              <div class="botoes">
+                <button data-comando="anterior" title="Anterior">
+                  <svg class="icone"><use href="#i-skip-back" /></svg>
+                </button>
+                <button data-comando="tocar_pausar" title="Tocar / pausar" class="botao-principal">
+                  <svg class="icone icone-tocar"><use href="#i-play" /></svg>
+                  <svg class="icone icone-pausar"><use href="#i-pause" /></svg>
+                </button>
+                <button data-comando="proxima" title="Próxima">
+                  <svg class="icone"><use href="#i-skip-forward" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="sem-musica">
+            <svg class="icone icone-grande"><use href="#i-headphones" /></svg>
+            Nada tocando agora<br />
+            <small>Abre o YouTube Music que eu apareço aqui</small>
+          </div>
+        </section>
+
+        <!-- --- Aba PC --- -->
+        <section class="aba-pc">
+          <div class="cartao" id="cartao-cpu">
+            <span class="rotulo"><svg class="icone"><use href="#i-cpu" /></svg>CPU</span>
+            <strong class="valor">—</strong>
+            <div class="medidor"><i></i></div>
+            <small class="detalhe">Ryzen 7</small>
+          </div>
+          <div class="cartao" id="cartao-ram">
+            <span class="rotulo"><svg class="icone"><use href="#i-memory-stick" /></svg>RAM</span>
+            <strong class="valor">—</strong>
+            <div class="medidor"><i></i></div>
+            <small class="detalhe"></small>
+          </div>
+          <div class="cartao" id="cartao-gpu">
+            <span class="rotulo"><svg class="icone"><use href="#i-monitor" /></svg>GPU</span>
+            <strong class="valor">—</strong>
+            <div class="medidor"><i></i></div>
+            <small class="detalhe"></small>
+          </div>
+          <div class="cartao" id="cartao-temperatura">
+            <span class="rotulo"><svg class="icone"><use href="#i-thermometer" /></svg>Temp</span>
+            <strong class="valor">—</strong>
+            <div class="medidor"><i></i></div>
+            <small class="detalhe"></small>
+          </div>
+          <div class="cartao em-breve" id="cartao-fps">
+            <span class="rotulo"><svg class="icone"><use href="#i-gauge" /></svg>FPS</span>
+            <strong class="valor">—</strong>
+            <div class="medidor"><i></i></div>
+            <small class="detalhe">em breve</small>
+          </div>
+        </section>
+
+        <!-- --- Aba Conexões (abre clicando no Wi-Fi/Bluetooth/bateria) --- -->
+        <section class="aba-conexoes">
+          <div class="conexao" id="conexao-wifi">
+            <div class="conexao-topo">
+              <span class="rotulo"><svg class="icone"><use href="#i-wifi" /></svg>Wi-Fi</span>
+              <button class="chave" data-radio="wifi" role="switch" title="Ligar / desligar"></button>
+            </div>
+            <strong class="conexao-valor" id="wifi-nome">—</strong>
+            <small class="conexao-detalhe" id="wifi-detalhe"></small>
+            <button class="conexao-link" data-tela="redes">Redes ›</button>
+          </div>
+
+          <div class="conexao" id="conexao-bluetooth">
+            <div class="conexao-topo">
+              <span class="rotulo"><svg class="icone"><use href="#i-bluetooth" /></svg>Bluetooth</span>
+              <button class="chave" data-radio="bluetooth" role="switch" title="Ligar / desligar"></button>
+            </div>
+            <strong class="conexao-valor" id="bluetooth-valor">—</strong>
+            <small class="conexao-detalhe" id="bluetooth-detalhe"></small>
+            <button class="conexao-link" data-tela="bluetooth">Aparelhos ›</button>
+          </div>
+
+          <div class="conexao" id="conexao-bateria">
+            <div class="conexao-topo">
+              <span class="rotulo"><svg class="icone"><use href="#i-battery-charging" /></svg>Bateria</span>
+            </div>
+            <strong class="conexao-valor" id="bateria-valor">—</strong>
+            <small class="conexao-detalhe" id="bateria-detalhe"></small>
+            <button class="conexao-link" data-tela="energia">Energia ›</button>
+          </div>
+        </section>
+      </div>
+      </div>
+    </div>
+  </body>
+</html>
