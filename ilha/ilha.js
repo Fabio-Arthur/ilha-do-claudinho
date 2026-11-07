@@ -439,11 +439,11 @@ function atualizarTextoDaBarra() {
   } else if (musicaAtual.tem_musica) {
     textoBarra.textContent = musicaAtual.titulo;
   } else {
-    // "qui., 6 de nov." — o jeito curtinho que o Brasil escreve a data
+    // "06/11/2026" — dd/mm/aaaa
     textoBarra.textContent = new Date().toLocaleDateString('pt-BR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
     });
   }
 }
