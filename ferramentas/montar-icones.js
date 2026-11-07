@@ -26,7 +26,6 @@ const ICONES = [
   'memory-stick',
   'monitor',
   'thermometer',
-  'gauge',
   // conexões
   'wifi',
   'bluetooth',

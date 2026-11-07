@@ -885,7 +885,7 @@ button {
 .aba-pc {
   /* minmax(0, 1fr) = colunas SEMPRE iguais, mesmo se um texto for maior
      (só "1fr" deixa a coluna esticar pra caber o texto) */
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: stretch;
 
   /* Um retângulo só pra todas as medidas.
@@ -963,10 +963,6 @@ button {
 .cartao.morno { --cor-nivel: var(--amarelo); }
 .cartao.quente { --cor-nivel: var(--coral); }
 .cartao.quente .valor { color: var(--coral); }
-
-.cartao.em-breve {
-  opacity: 0.45;
-}
 
 /* ===== Aba Conexões ===== */
 .aba-conexoes {
