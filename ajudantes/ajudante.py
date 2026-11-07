@@ -1,7 +1,7 @@
-# Ajudante da Ilha do Claudinho: UM programa Python só, que faz 4 trabalhos ao mesmo tempo.
+# Ajudante da Ilha do Claudinho: UM programa Python só, que faz 5 trabalhos ao mesmo tempo.
 #
 # Antes eram programas separados (e cada um ocupava ~30 MB de RAM). Agora as
-# partes (música, jogos, rádios e janela) rodam juntas aqui dentro, revezando,
+# partes (música, jogos, rádios, janela e clima) rodam juntas aqui dentro, revezando,
 # com o asyncio: enquanto uma espera, a outra trabalha.
 #
 # Como ele conversa com a ilha (main.js):
@@ -16,6 +16,7 @@ import queue
 import sys
 import threading
 
+import clima
 import janela
 import jogos
 import musica
@@ -51,6 +52,7 @@ async def main():
         jogos.rodar(criar_enviar("jogos")),
         radios.rodar(criar_enviar("radios"), filas["radios"]),
         janela.rodar(criar_enviar("janela")),
+        clima.rodar(criar_enviar("clima")),
     )
 
 

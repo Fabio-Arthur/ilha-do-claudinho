@@ -33,6 +33,24 @@ const ICONES = [
   'battery-charging',
   'battery',
   'zap',
+  // clima
+  'sun',
+  'moon',
+  'cloud-sun',
+  'cloud-moon',
+  'cloud',
+  'cloud-fog',
+  'cloud-drizzle',
+  'cloud-rain',
+  'cloud-sun-rain',
+  'cloud-moon-rain',
+  'cloud-snow',
+  'cloud-lightning',
+  'droplets',
+  'map-pin',
+  'map-pin-off',
+  'arrow-down',
+  'arrow-up',
 ];
 
 const pastaLucide = path.join(__dirname, '..', 'node_modules', 'lucide-static', 'icons');

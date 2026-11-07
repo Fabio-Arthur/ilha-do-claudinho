@@ -66,6 +66,9 @@ function criarJanela() {
   janela.setIgnoreMouseEvents(true, { forward: true });
 
   janela.loadFile(path.join(__dirname, 'ilha', 'index.html'));
+  janela.webContents.on('did-finish-load', () => {
+    if (ultimoClima) janela.webContents.send('clima-mudou', ultimoClima);
+  });
 
   if (ALTURA_RESERVADA > 0) reservarEspaco(janela, tela, ALTURA_RESERVADA);
   janela.on('closed', liberarEspaco); // garantia extra: fechou a janela, devolve o espaço
@@ -110,7 +113,17 @@ const AO_RECEBER = {
 
   // O programa que você está usando chega no topo da tela? (a ilha vira relevinho)
   janela: ({ coberta }) => janela.webContents.send('janela-mudou', coberta),
+
+  // Previsão do tempo (chega a cada 15 min)
+  clima: (previsao) => {
+    ultimoClima = previsao;
+    janela.webContents.send('clima-mudou', previsao);
+  },
 };
+
+// O clima só chega a cada 15 min: guardamos o último pra mandar de novo
+// se a página recarregar (menu "Recarregar a ilha"), senão a aba ficaria vazia.
+let ultimoClima = null;
 
 // Liga o ajudante. Se ele cair, liga de novo sozinho depois de 3 segundos.
 function ligarAjudante() {
@@ -242,6 +255,7 @@ const TELAS_DO_WINDOWS = {
   redes: 'ms-availablenetworks:', // a listinha de redes Wi-Fi
   bluetooth: 'ms-settings:bluetooth',
   energia: 'ms-settings:batterysaver',
+  localizacao: 'ms-settings:privacy-location', // pra ligar a Localização (o clima precisa)
 };
 
 ipcMain.on('abrir-tela', (_evento, nome) => {

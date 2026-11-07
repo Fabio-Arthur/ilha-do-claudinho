@@ -16,4 +16,5 @@ contextBridge.exposeInMainWorld('ilha', {
   quandoWifiMudar: (funcao) => ipcRenderer.on('wifi-mudou', (_evento, wifi) => funcao(wifi)),
   quandoJogoMudar: (funcao) => ipcRenderer.on('jogo-mudou', (_evento, jogo) => funcao(jogo)),
   quandoJanelaMudar: (funcao) => ipcRenderer.on('janela-mudou', (_evento, coberta) => funcao(coberta)),
+  quandoClimaMudar: (funcao) => ipcRenderer.on('clima-mudou', (_evento, previsao) => funcao(previsao)),
 });

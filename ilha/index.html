@@ -63,11 +63,18 @@
           </span>
         </div>
 
+        <!-- Só a aba escolhida mostra o nome; as outras ficam só no ícone (assim cabem 3) -->
         <nav class="abas">
-          <button data-aba="musica"><svg class="icone"><use href="#i-music" /></svg>Música</button>
+          <button data-aba="musica" title="Música">
+            <svg class="icone"><use href="#i-music" /></svg><span class="nome-aba">Música</span>
+          </button>
           <!-- Durante um jogo, o JS troca o ícone pro controle e o texto pro nome do jogo -->
-          <button data-aba="pc">
-            <svg class="icone"><use id="icone-aba-pc" href="#i-cpu" /></svg><span id="texto-aba-pc">PC</span>
+          <button data-aba="pc" title="PC">
+            <svg class="icone"><use id="icone-aba-pc" href="#i-cpu" /></svg><span id="texto-aba-pc" class="nome-aba">PC</span>
+          </button>
+          <!-- O ícone da aba Clima é o do tempo de agora (sol, nuvem, chuva...) -->
+          <button data-aba="clima" title="Clima">
+            <svg class="icone"><use id="icone-aba-clima" href="#i-cloud-sun" /></svg><span class="nome-aba">Clima</span>
           </button>
         </nav>
 
@@ -219,6 +226,40 @@
             <strong class="conexao-valor" id="bateria-valor">—</strong>
             <small class="conexao-detalhe" id="bateria-detalhe"></small>
             <button class="conexao-link" data-tela="energia">Energia ›</button>
+          </div>
+        </section>
+
+        <!-- --- Aba Clima: o tempo de agora + as próximas 4 horas --- -->
+        <section class="aba-clima">
+          <div class="previsao">
+            <div class="clima-agora">
+              <div class="clima-agora-topo">
+                <svg class="icone clima-icone-agora"><use id="clima-icone-agora" href="#i-cloud-sun" /></svg>
+                <strong id="clima-temperatura">—</strong>
+              </div>
+              <div id="clima-condicao" class="clima-condicao">carregando…</div>
+              <!-- Máxima e mínima de hoje -->
+              <div class="clima-hoje maxima-minima">
+                <span class="maxima" title="Máxima de hoje"><svg class="icone"><use href="#i-arrow-up" /></svg><b id="clima-maxima">—</b></span>
+                <span class="minima" title="Mínima de hoje"><svg class="icone"><use href="#i-arrow-down" /></svg><b id="clima-minima">—</b></span>
+              </div>
+              <!-- Chance de chuva de hoje -->
+              <div class="clima-hoje chuva-hoje" title="Chance de chuva hoje">
+                <span><svg class="icone"><use href="#i-droplets" /></svg><b id="clima-chuva">—</b>de chuva</span>
+              </div>
+            </div>
+            <!-- As 4 colunas das próximas horas (o JS preenche) -->
+            <div class="clima-hora"><small class="hora"></small><svg class="icone"><use href="#i-cloud" /></svg><b class="temperatura"></b><small class="chuva"></small></div>
+            <div class="clima-hora"><small class="hora"></small><svg class="icone"><use href="#i-cloud" /></svg><b class="temperatura"></b><small class="chuva"></small></div>
+            <div class="clima-hora"><small class="hora"></small><svg class="icone"><use href="#i-cloud" /></svg><b class="temperatura"></b><small class="chuva"></small></div>
+            <div class="clima-hora"><small class="hora"></small><svg class="icone"><use href="#i-cloud" /></svg><b class="temperatura"></b><small class="chuva"></small></div>
+          </div>
+
+          <!-- Aparece no lugar da previsão quando não deu pra saber o tempo -->
+          <div class="clima-problema">
+            <svg class="icone icone-grande"><use href="#i-map-pin-off" /></svg>
+            <span id="clima-problema-texto"></span>
+            <button class="conexao-link" data-tela="localizacao">Ligar a Localização ›</button>
           </div>
         </section>
       </div>

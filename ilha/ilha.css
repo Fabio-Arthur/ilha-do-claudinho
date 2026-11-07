@@ -533,7 +533,7 @@ button {
   flex: 1;
   display: none;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 #ilha.aberta .centro { display: none; }
@@ -557,9 +557,33 @@ button {
 
 /* Aba escolhida fica acesa. O seletor lê: "botão cuja aba é igual à da ilha" */
 #ilha[data-aba='musica'] .abas [data-aba='musica'],
-#ilha[data-aba='pc'] .abas [data-aba='pc'] {
+#ilha[data-aba='pc'] .abas [data-aba='pc'],
+#ilha[data-aba='clima'] .abas [data-aba='clima'] {
   background: rgb(255 255 255 / 0.1);
   color: var(--texto);
+}
+
+/* São 3 abas num espaço pequeno: só a escolhida mostra o nome, as outras
+   ficam só com o ícone (passando o mouse aparece o nome) */
+.abas .nome-aba {
+  display: none;
+}
+
+/* Aba só de ícone: menos "almofada" dos lados */
+.abas button {
+  padding: 3px 6px;
+}
+
+#ilha[data-aba='musica'] .abas [data-aba='musica'] .nome-aba,
+#ilha[data-aba='pc'] .abas [data-aba='pc'] .nome-aba,
+#ilha[data-aba='clima'] .abas [data-aba='clima'] .nome-aba {
+  display: inline;
+}
+
+#ilha[data-aba='musica'] .abas [data-aba='musica'],
+#ilha[data-aba='pc'] .abas [data-aba='pc'],
+#ilha[data-aba='clima'] .abas [data-aba='clima'] {
+  padding: 3px 10px;
 }
 
 /* ===== Barrinhas da música ===== */
@@ -619,7 +643,8 @@ button {
 /* Só a aba escolhida aparece */
 .aba-musica,
 .aba-pc,
-.aba-conexoes {
+.aba-conexoes,
+.aba-clima {
   display: none;
   height: 100%;
 }
@@ -627,6 +652,7 @@ button {
 #ilha[data-aba='musica'] .aba-musica { display: block; }
 #ilha[data-aba='pc'] .aba-pc { display: grid; }
 #ilha[data-aba='conexoes'] .aba-conexoes { display: grid; }
+#ilha[data-aba='clima'] .aba-clima { display: block; }
 
 /* ===== Aba Música ===== */
 .musica {
@@ -1043,3 +1069,152 @@ button {
 @keyframes esperando {
   to { opacity: 0.5; }
 }
+
+/* ===== Aba Clima ===== */
+/* Mesmo retângulo com divisórias da aba PC: o "agora" é a coluna mais larga,
+   depois 5 colunas iguais pras próximas horas */
+.previsao {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) repeat(4, minmax(0, 1fr));
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.03));
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 16px;
+  padding: 10px 0;
+}
+
+/* --- Agora --- */
+.clima-agora {
+  padding: 0 10px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.clima-agora-topo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clima-icone-agora {
+  width: 24px;
+  height: 24px;
+  color: var(--lavanda);
+  stroke-width: 1.5;
+}
+
+/* De dia o sol fica amarelinho */
+.aba-clima.de-dia .clima-icone-agora {
+  color: var(--amarelo);
+}
+
+#clima-temperatura {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.clima-condicao {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Máxima/mínima e chance de chuva: uma linha cada, bem legíveis */
+.clima-hoje {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+  white-space: nowrap;
+}
+
+.clima-hoje span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.clima-hoje b {
+  font-weight: 700;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.clima-hoje .icone {
+  width: 13px;
+  height: 13px;
+}
+
+/* Setinha da máxima quentinha, da mínima fresquinha, gotinha lavanda */
+.clima-hoje .maxima .icone { color: var(--coral); }
+.clima-hoje .minima .icone { color: var(--lavanda); }
+.chuva-hoje .icone { color: var(--lavanda); }
+
+/* As duas linhas ficam no pé da coluna */
+.clima-agora .maxima-minima {
+  margin-top: auto;
+}
+
+/* --- Próximas horas --- */
+.clima-hora {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  border-left: 1px solid rgb(255 255 255 / 0.08); /* divisória igual à aba PC */
+  min-width: 0;
+}
+
+.clima-hora .hora,
+.clima-hora .chuva {
+  font-size: 10px;
+  color: var(--texto-fraco);
+  font-variant-numeric: tabular-nums;
+}
+
+.clima-hora .icone {
+  width: 18px;
+  height: 18px;
+  color: var(--lavanda);
+}
+
+.clima-hora .temperatura {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chance de chuva alta: a gotinha de % fica mais visível */
+.clima-hora .chuva.vai-chover {
+  color: var(--texto);
+}
+
+/* --- Quando não dá pra saber o tempo --- */
+.clima-problema {
+  display: none;
+  height: 100%;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  font-size: 13px;
+  gap: 2px;
+}
+
+.clima-problema .icone-grande {
+  width: 26px;
+  height: 26px;
+  color: var(--lavanda);
+  stroke-width: 1.5;
+}
+
+/* O link de ligar a Localização só faz sentido quando o problema é ela */
+.aba-clima:not(.sem-localizacao) .clima-problema .conexao-link {
+  display: none;
+}
+
+.aba-clima.com-problema .previsao { display: none; }
+.aba-clima.com-problema .clima-problema { display: grid; }

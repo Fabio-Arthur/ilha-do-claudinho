@@ -426,6 +426,96 @@ window.ilha.quandoJanelaMudar((coberta) => {
   atualizarRelevinho();
 });
 
+// ---------- Clima ----------
+// O ajudante manda a previsão a cada 15 min. O "codigo" é o código de tempo da
+// Organização Meteorológica Mundial (WMO): 0 = céu limpo, 61 = chuva, 95 = trovoada...
+
+// Código → [nome curtinho, ícone de dia, ícone de noite]
+const TEMPOS = {
+  0: ['Céu limpo', 'sun', 'moon'],
+  1: ['Poucas nuvens', 'cloud-sun', 'cloud-moon'],
+  2: ['Parc. nublado', 'cloud-sun', 'cloud-moon'],
+  3: ['Nublado', 'cloud', 'cloud'],
+  45: ['Neblina', 'cloud-fog', 'cloud-fog'],
+  48: ['Neblina', 'cloud-fog', 'cloud-fog'],
+  51: ['Garoa fraca', 'cloud-drizzle', 'cloud-drizzle'],
+  53: ['Garoa', 'cloud-drizzle', 'cloud-drizzle'],
+  55: ['Garoa forte', 'cloud-drizzle', 'cloud-drizzle'],
+  56: ['Garoa gelada', 'cloud-drizzle', 'cloud-drizzle'],
+  57: ['Garoa gelada', 'cloud-drizzle', 'cloud-drizzle'],
+  61: ['Chuva fraca', 'cloud-rain', 'cloud-rain'],
+  63: ['Chuva', 'cloud-rain', 'cloud-rain'],
+  65: ['Chuva forte', 'cloud-rain', 'cloud-rain'],
+  66: ['Chuva gelada', 'cloud-rain', 'cloud-rain'],
+  67: ['Chuva gelada', 'cloud-rain', 'cloud-rain'],
+  71: ['Neve fraca', 'cloud-snow', 'cloud-snow'],
+  73: ['Neve', 'cloud-snow', 'cloud-snow'],
+  75: ['Neve forte', 'cloud-snow', 'cloud-snow'],
+  77: ['Neve', 'cloud-snow', 'cloud-snow'],
+  80: ['Pancadas', 'cloud-sun-rain', 'cloud-moon-rain'],
+  81: ['Pancadas', 'cloud-sun-rain', 'cloud-moon-rain'],
+  82: ['Pancadas fortes', 'cloud-rain', 'cloud-rain'],
+  85: ['Neve', 'cloud-snow', 'cloud-snow'],
+  86: ['Neve forte', 'cloud-snow', 'cloud-snow'],
+  95: ['Trovoada', 'cloud-lightning', 'cloud-lightning'],
+  96: ['Trovoada c/ granizo', 'cloud-lightning', 'cloud-lightning'],
+  99: ['Trovoada c/ granizo', 'cloud-lightning', 'cloud-lightning'],
+};
+
+function comoEstaOTempo(codigo, deDia) {
+  const [nome, iconeDia, iconeNoite] = TEMPOS[codigo] ?? ['—', 'cloud', 'cloud'];
+  return { nome, icone: '#i-' + (deDia ? iconeDia : iconeNoite) };
+}
+
+const abaClima = document.querySelector('.aba-clima');
+const iconeAbaClima = document.getElementById('icone-aba-clima');
+const graus = (temperatura) => Math.round(temperatura) + '°'; // 20.6 → "21°"
+
+window.ilha.quandoClimaMudar((previsao) => {
+  // Deu problema: troca a previsão por um aviso
+  abaClima.classList.toggle('com-problema', Boolean(previsao.erro));
+  abaClima.classList.toggle('sem-localizacao', previsao.erro === 'sem-localizacao');
+  if (previsao.erro) {
+    document.getElementById('clima-problema-texto').textContent =
+      previsao.erro === 'sem-localizacao'
+        ? 'Preciso da Localização do Windows ligada'
+        : 'Sem internet pra ver o tempo agora';
+    return;
+  }
+
+  const { agora, hoje, horas } = previsao;
+  const tempoAgora = comoEstaOTempo(agora.codigo, agora.de_dia);
+
+  // --- Agora ---
+  abaClima.classList.toggle('de-dia', agora.de_dia);
+  document.getElementById('clima-icone-agora').setAttribute('href', tempoAgora.icone);
+  iconeAbaClima.setAttribute('href', tempoAgora.icone); // a aba também mostra o tempo de agora
+  document.getElementById('clima-temperatura').textContent = graus(agora.temperatura);
+  document.getElementById('clima-condicao').textContent = tempoAgora.nome;
+  document.getElementById('clima-condicao').title = `Sensação de ${graus(agora.sensacao)}`;
+  document.getElementById('clima-minima').textContent = graus(hoje.minima);
+  document.getElementById('clima-maxima').textContent = graus(hoje.maxima);
+  document.getElementById('clima-chuva').textContent = hoje.chuva + '%';
+  // Cidade e hora da atualização: aparecem passando o mouse em "agora" ("Blumenau · 21:15")
+  document.querySelector('.clima-agora').title = [previsao.cidade, 'atualizado ' + previsao.atualizado]
+    .filter(Boolean)
+    .join(' · ');
+
+  // --- Próximas horas ---
+  document.querySelectorAll('.clima-hora').forEach((coluna, posicao) => {
+    const hora = horas[posicao];
+    if (!hora) return;
+    const tempo = comoEstaOTempo(hora.codigo, hora.de_dia);
+    coluna.title = tempo.nome;
+    coluna.querySelector('.hora').textContent = hora.hora;
+    coluna.querySelector('use').setAttribute('href', tempo.icone);
+    coluna.querySelector('.temperatura').textContent = graus(hora.temperatura);
+    const chuva = coluna.querySelector('.chuva');
+    chuva.textContent = hora.chuva + '%';
+    chuva.classList.toggle('vai-chover', hora.chuva >= 50);
+  });
+});
+
 // ---------- Texto da barra fechada ----------
 // Jogando: GPU e temperatura. Com música: o nome da música. Sem nada: a data.
 
